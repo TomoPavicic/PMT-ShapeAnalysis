@@ -473,9 +473,9 @@ def CheckWaveformsAgain(PATH, root_filename, PMT_data_filenames, topology, wavef
 
 
 def main(run,DATA_PATH,ROOT_PATH):
-    #DATA_PATH = "/Users/willquinn/Documents/PhD/SuperNEMO/GV_XW_ComData/run_"+run+"/"
+    DATA_PATH = DATA_PATH+"run_"+run+"/"
     #ROOT_PATH = "/Users/willquinn/Documents/PhD/SuperNEMO/GV_XW_ComData/"
-    Data_files = getDataFiles(DATA_PATH + "filenames_"+run+".txt")
+    Data_files = getDataFiles(DATA_PATH +"filenames_"+run+".txt")
 
     root_filename = "Average_Waveforms_run"+run+".root"
 
