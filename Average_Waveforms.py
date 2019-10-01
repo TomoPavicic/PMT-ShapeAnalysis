@@ -472,9 +472,9 @@ def CheckWaveformsAgain(PATH, root_filename, PMT_data_filenames, topology, wavef
     print(shape_vector)
 
 
-def main(run):
-    DATA_PATH = "/Users/willquinn/Documents/PhD/SuperNEMO/GV_XW_ComData/run_"+run+"/"
-    ROOT_PATH = "/Users/willquinn/Documents/PhD/SuperNEMO/GV_XW_ComData/"
+def main(run,DATA_PATH,ROOT_PATH):
+    #DATA_PATH = "/Users/willquinn/Documents/PhD/SuperNEMO/GV_XW_ComData/run_"+run+"/"
+    #ROOT_PATH = "/Users/willquinn/Documents/PhD/SuperNEMO/GV_XW_ComData/"
     Data_files = getDataFiles(DATA_PATH + "filenames_"+run+".txt")
 
     root_filename = "Average_Waveforms_run"+run+".root"
@@ -494,6 +494,13 @@ def main(run):
 if __name__ == '__main__':
     print ("Input the run number: ")
     run = str(raw_input())
-    main(run)
+    print(">>>")
+    print ("Input the Data PATH: ")
+    DATA_PATH = str(raw_input())
+    print(">>>")
+    print("Input the output file PATH: ")
+    OUTPUT_PATH = str(raw_input())
+    print(">>> Analysing...")
+    main(run,DATA_PATH,OUTPUT_PATH)
     end = time.time()
     print(">>>\n>>> The program lasted %.3f seconds.\n" % (end - start))
