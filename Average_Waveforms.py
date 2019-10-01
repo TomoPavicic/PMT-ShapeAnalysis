@@ -14,7 +14,6 @@ start = time.time()
 from ROOT import TFile, TH1F, TH2F, TMultiGraph, TGraph, TCanvas, TH2I
 from math import log10
 from numpy import sqrt
-from tqdm import *
 
 
 def getNORM(ADC_values, calculated_baseline):
@@ -82,7 +81,7 @@ def Read_Data(PMT_data_filename,pre_PULSE_region,waveform_length,average_pulse_c
     line_number = 0
     waveform_number = 0
 
-    for index, line in tqdm(enumerate(PMT_Data_file.readlines()[10:])):
+    for index, line in enumerate(PMT_Data_file.readlines()[10:]):
         info = line.split(" ")
 
         if info[0] == "=" and info[1] == "HIT":
@@ -666,8 +665,8 @@ if __name__ == '__main__':
     '''
 
     #run = "214"
-    DATA_PATH = "/Users/willquinn/Documents/PhD/SuperNEMO/GV_XW_ComData/Data/"
-    OUTPUT_PATH = "/Users/willquinn/Desktop/"
+    DATA_PATH = "/unix/nemo3/SN_Calo_Commissioning_Runs/GVETO_XWALL_Runs/"
+    OUTPUT_PATH = "/home/wquinn/GV_XW_ComData/"
 
     topology = [16,16]
     trigger_point = 160
