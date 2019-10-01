@@ -146,130 +146,6 @@ def Read_Data(PMT_data_filename,pre_PULSE_region,waveform_length,average_pulse_c
 
         line_number += 1
 
-
-def getReadFile(PMT_data_filename, slot_num, channel_num, pre_PULSE_region, average_pulse_trace,
-                       average_pulse_counter, waveform_length,Spectra,Spectra_cal,Peak_Cell_Hist,Rise_Time_Hist,Amplitude_Hist,Ratio_Hist):
-    PMT_Data_file = open(PMT_data_filename, 'r')
-    i_waveform = 0
-    i_line = 0
-    newWaveform = False
-    event_num_HT = 0
-    event_num_LTO = 0
-    event = False
-
-    for index, line in enumerate(PMT_Data_file.readlines()[10:]):
-        info = line.split(" ")
-        if info[0] == "=" and info[1] == "HIT":
-            newWaveform = True
-            i_waveform += 1
-            i_line = 0
-
-        if newWaveform and i_line == 1:
-            sl = int(info[1])
-            ch = int(info[3])
-            event_id_HT = int(info[7])
-            event_id_LTO = int(info[5])
-            peak_cell = int(info[27])
-            charge = float(info[29])
-            rise_time = float(info[39])
-
-            if int(event_id_HT) != 0 and int(slot_num) == int(sl) and int(channel_num) == int(ch):
-                event_num_HT += 1
-                event = True
-            elif int(event_id_LTO) != 0 and int(slot_num) == int(sl) and int(channel_num) == int(ch):
-                event_num_LTO += 1
-                event = True
-            else:
-                event = False
-
-        elif event and i_line == 2:
-            ADC_values = []
-            for i_ADC in range(waveform_length):
-                ADC_values.append(float(info[i_ADC]))
-
-            # Store some waveforms
-            if average_pulse_counter < 5:
-                trace = TH1F("Waveform_" + str(slot_num) + "_" + str(channel_num) + "_" + str(i_waveform),
-                             "Waveform_" + str(slot_num) + "_" + str(channel_num) + "_" + str(i_waveform),
-                             waveform_length, 0, waveform_length)
-                trace.GetXaxis().SetTitle("Sample Number")
-                trace.GetYaxis().SetTitle("ADC Counts")
-                for i in range(waveform_length):
-                    trace.SetBinContent(i, ADC_values[i])
-                trace.Write("", TFile.kOverwrite)
-                del trace
-
-            # print ("Averaging a waveform")
-            # integrated_area = getTotalArea(ADC_values,trigger_point,400)
-            # if integrated_area > 1000:
-            average_pulse_trace = UpdateAveragePulse(average_pulse_trace, ADC_values, pre_PULSE_region, peak_cell)
-            average_pulse_counter += 1
-
-            i_line = -1
-            event = False
-
-            Spectra.Fill(abs(charge))
-
-            cal_charge = getTotalArea(ADC_values,pre_PULSE_region,864)
-            cal_amplitude = getAmplitude(ADC_values,pre_PULSE_region,peak_cell)
-            if cal_charge > 0:
-                Ratio = abs(cal_amplitude/cal_charge)
-            else:
-                Ratio = 10000000000000
-
-            Spectra_cal.Fill(abs(cal_charge))
-            Peak_Cell_Hist.Fill(peak_cell)
-            Rise_Time_Hist.Fill(rise_time)
-            Amplitude_Hist.Fill(abs(cal_amplitude))
-            Ratio_Hist.Fill(Ratio)
-
-        i_line += 1
-
-        if average_pulse_counter == 1000:
-            return average_pulse_trace, average_pulse_counter, event_num_HT, event_num_LTO
-
-    # print ("Slot ",slot_num, " Channel ", channel_num, "number  of waveforms")
-    return average_pulse_trace, average_pulse_counter, event_num_HT, event_num_LTO
-
-
-def getfile_again(shape_vector, PMT_data_filename, pre_PULSE_region, template_vector, waveform_length):
-    PMT_Data_file = open(PMT_data_filename, 'r')
-
-    for index, line in enumerate(PMT_Data_file.readlines()[10:]):
-        if (index + 1) % 3 == 1:
-            info = line.split(" ")
-            sl = info[1]
-            ch = info[3]
-            event_id = info[7]
-            peak_cell = info[27]
-
-            if int(ch) == 13:
-                event_id = 0
-        if (index + 1) % 3 == 2:
-            if int(event_id) != 0:
-                # print event_id
-                if 60 <= int(peak_cell) <= 400:
-                    waveform_vector = [] * waveform_length
-                    ADC_values = line.split(" ")
-                    baseline_calculated = getBaseline(ADC_values, pre_PULSE_region)
-                    NORM = 0
-                    for i in range(waveform_length):
-                        # print i
-                        # print ADC_values[int(peak_cell)-60+i]
-                        # print int(peak_cell)-60+i
-                        waveform_vector.append(float(ADC_values[int(peak_cell) - 60 + i]) - baseline_calculated)
-                        NORM += (float(ADC_values[int(peak_cell) - 60 + i]) - baseline_calculated) ** 2
-                    NORM = NORM ** 0.5
-                    shape_index = 0.0
-                    for i in range(waveform_length):
-                        waveform_vector[i] = waveform_vector[i] / NORM
-                        shape_index += waveform_vector[i] * template_vector[i]
-                    # print int(sl) + 20*int(ch)
-                    shape_vector[int(sl) + int(ch) * 20].append(shape_index)
-
-    return shape_vector
-
-
 def getDataFiles(DataFiles_filename):
     DataFiles = open(DataFiles_filename, 'r')
     Data_files_list = []
@@ -371,59 +247,10 @@ def AnalyseWaveforms(topology, PATH, PMT_data_filenames, root_filename, pre_PULS
                 del Ratio_hist
                 del average_pulse_trace_hist
 
-                '''
-                for file_num in range(len(PMT_data_filenames)):
-                    average_pulse_trace, average_pulse_counter, event_number_HT, event_number_LTO = getReadFile(
-                        PATH + PMT_data_filenames[file_num].rstrip(),
-                        slot_num,
-                        channel_num,
-                        pre_PULSE_region,
-                        average_pulse_trace,
-                        average_pulse_counter,
-                        waveform_length,
-                        Spectra,
-                        Spectra_cal,
-                        Peak_Cell,
-                        Rise_Time,
-                        Amplitude,
-                        Ratio)
-
-                    event_num_HT += event_number_HT
-                    event_num_LTO += event_number_LTO
-
-                #print("Slot: ", slot_num, " Channel: ", channel_num, " Number of events: ",event_num_HT + event_num_LTO)
-                map.Fill(slot_num, channel_num, event_num_HT + event_num_LTO)
-                map_HT.Fill(slot_num, channel_num, event_num_HT)
-                map_LTO.Fill(slot_num, channel_num, event_num_LTO)
-                #print("Slot: ", slot_num, " Channel: ", channel_num, " Number of waveforms averaged: ",average_pulse_counter)
-
-                Spectra.Write("", TFile.kOverwrite)
-                Spectra_cal.Write("", TFile.kOverwrite)
-                Peak_Cell.Write("", TFile.kOverwrite)
-                Rise_Time.Write("", TFile.kOverwrite)
-                Amplitude.Write("", TFile.kOverwrite)
-                Ratio.Write("", TFile.kOverwrite)
-                del Spectra
-                del Spectra_cal
-                del Peak_Cell
-                del Rise_Time
-                del Amplitude
-                del Ratio
-
-                for bin in range(len(average_pulse_trace)):
-                    # Avoid dividing by zero
-                    if average_pulse_counter == 0:
-                        average_pulse_counter = 1
-                    average_pulse_trace_hist.SetBinContent(bin,(average_pulse_trace[bin] / average_pulse_counter) * 1000.0)
-                    average_pulse_trace_hist.SetBinError(bin, 1.0)
-
-                average_pulse_trace_hist.Write()
-
-                del average_pulse_trace
-                '''
-
         # Now run ove the files
         print(">>> Reading Data Files... ")
+        processing_start = time.time()
+        temp_start = processing_start
         for file_num in range(len(PMT_data_filenames)):
             print (">>> File: ", PATH + PMT_data_filenames[file_num].rstrip())
             Read_Data(PATH + PMT_data_filenames[file_num].rstrip(),
@@ -440,7 +267,13 @@ def AnalyseWaveforms(topology, PATH, PMT_data_filenames, root_filename, pre_PULS
                       Amplitude_hist_vector,
                       Ratio_hist_vector,
                       blank_num_vector)
-            print("Processed ",float(file_num+1)/float(len(PMT_data_filenames))*100, "% ...")
+            intermidiate = time.time()
+            time_length = intermidiate - processing_start
+            print(">>>\n>>>  %.3f seconds.\n" % (intermidiate-temp_start))
+            temp_start = intermidiate
+            print("Processed %.2f of data..." % (float(file_num+1)/float(len(PMT_data_filenames))*100))
+            Estimate = (time_length/float(file_num+1)) * (len(PMT_data_filenames) - file_num - 1)
+            print(">>> Estimated time till termination %.3f seconds\n\n" % Estimate)
 
 
 
@@ -665,8 +498,8 @@ if __name__ == '__main__':
     '''
 
     #run = "214"
-    DATA_PATH = "/unix/nemo3/SN_Calo_Commissioning_Runs/GVETO_XWALL_Runs/"
-    OUTPUT_PATH = "/home/wquinn/GV_XW_ComData/"
+    DATA_PATH = "/Users/willquinn/Documents/PhD/SuperNEMO/GV_XW_ComData/Data/"
+    OUTPUT_PATH = "/Users/willquinn/Desktop/"
 
     topology = [16,16]
     trigger_point = 160
