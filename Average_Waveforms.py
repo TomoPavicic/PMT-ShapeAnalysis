@@ -204,15 +204,15 @@ def AnalyseWaveforms(topology, PATH, PMT_data_filenames, root_filename, pre_PULS
 
             for channel_num in range(topology[1]):
 
-                Spectra_hist = TH1F("Spectra_" + str(slot_num) + "_" + str(channel_num),"Spectra_" + str(slot_num) + "_" + str(channel_num), 200, 0, 100000)
+                Spectra_hist = TH1F("Spectra_" + str(slot_num) + "_" + str(channel_num),"Spectra_" + str(slot_num) + "_" + str(channel_num), 200, 0, 200000)
                 Spectra_hist.GetXaxis().SetTitle("Raw Charge")
                 Spectra_hist_vector[slot_num].append(Spectra_hist)
 
-                Spectra_cal_hist = TH1F("Spectra_cal_" + str(slot_num) + "_" + str(channel_num),"Spectra_cal_" + str(slot_num) + "_" + str(channel_num), 200, 0, 100000)
+                Spectra_cal_hist = TH1F("Spectra_cal_" + str(slot_num) + "_" + str(channel_num),"Spectra_cal_" + str(slot_num) + "_" + str(channel_num), 200, 0, 200000)
                 Spectra_cal_hist.GetXaxis().SetTitle("Raw Charge")
                 Spectra_cal_hist_vector[slot_num].append(Spectra_cal_hist)
 
-                Peak_Cell_hist = TH1F("Peak_Cell_"+str(slot_num)+"_"+str(channel_num),"Peak_Cell_"+str(slot_num)+"_"+str(channel_num), 200,200,350)
+                Peak_Cell_hist = TH1F("Peak_Cell_"+str(slot_num)+"_"+str(channel_num),"Peak_Cell_"+str(slot_num)+"_"+str(channel_num), waveform_length,0,waveform_length)
                 Peak_Cell_hist.GetXaxis().SetTitle("Peak Cell Position /Sample Number")
                 Peak_Cell_hist_vector[slot_num].append(Peak_Cell_hist)
 
@@ -220,7 +220,7 @@ def AnalyseWaveforms(topology, PATH, PMT_data_filenames, root_filename, pre_PULS
                 Rise_Time_hist.GetXaxis().SetTitle("Rise Time")
                 Rise_Time_hist_vector[slot_num].append(Rise_Time_hist)
 
-                Amplitude_hist = TH1F("Amplitudes_"+str(slot_num)+"_"+str(channel_num),"Amplitudes_"+str(slot_num)+"_"+str(channel_num),200,0,4000)
+                Amplitude_hist = TH1F("Amplitudes_"+str(slot_num)+"_"+str(channel_num),"Amplitudes_"+str(slot_num)+"_"+str(channel_num),200,0,2100)
                 Amplitude_hist.GetXaxis().SetTitle("Amplitude /ADC Counts")
                 Amplitude_hist_vector[slot_num].append(Amplitude_hist)
 
