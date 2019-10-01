@@ -498,13 +498,13 @@ if __name__ == '__main__':
     '''
 
     #run = "214"
-    DATA_PATH = "/Users/willquinn/Documents/PhD/SuperNEMO/GV_XW_ComData/Data/"
-    OUTPUT_PATH = "/Users/willquinn/Desktop/"
+    DATA_PATH = "/unix/nemo3/SN_Calo_Commissioning_Runs/GVETO_XWALL_Runs/"
+    OUTPUT_PATH = "/home/wquinn/GV_XW_ComData/"
 
     topology = [16,16]
     trigger_point = 160
     pulse_length= 1024
-    template_num = [10,1]
+    template_num = [14,15]
 
     main(run,DATA_PATH,OUTPUT_PATH,topology,trigger_point,pulse_length,template_num)
 
