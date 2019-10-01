@@ -653,10 +653,10 @@ def main(run,DATA_PATH,ROOT_PATH,topology,trigger_point,pulse_length,template_nu
 
 
 if __name__ == '__main__':
-    '''
     print (">>> Input the run number: ")
     run = str(raw_input(">>> "))
     print(">>>")
+    '''
     print (">>> Input the Data PATH: ")
     DATA_PATH = str(raw_input(">>> "))
     print(">>>")
@@ -664,7 +664,8 @@ if __name__ == '__main__':
     OUTPUT_PATH = str(raw_input(">>> "))
     print(">>> Analysing...")
     '''
-    run = "214"
+
+    #run = "214"
     DATA_PATH = "/Users/willquinn/Documents/PhD/SuperNEMO/GV_XW_ComData/Data/"
     OUTPUT_PATH = "/Users/willquinn/Desktop/"
 
