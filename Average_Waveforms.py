@@ -105,7 +105,7 @@ def Read_Data(PMT_data_filename,pre_PULSE_region,waveform_length,average_pulse_c
             else:
                 blank_num_vector[sl][ch] += 1 # Maybe add in a blank waveform counter
 
-        elif newWaveform and line_number == 2:
+        elif newWaveform and line_number == 2 and len(info)-1 == waveform_length:
             ADC_values = []
             for i_ADC in range(waveform_length):
                 ADC_values.append(float(info[i_ADC]))
