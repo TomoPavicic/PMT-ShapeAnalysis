@@ -30,8 +30,8 @@ def getAmplitude(ADC_values,calculated_baseline,peak_cell):
 
 
 def UpdateAveragePulse(average_pulse_trace, ADC_values,calculated_baseline,peak_cell):
-    NORM = getNORM(ADC_values, calculated_baseline)
-    # NORM = 1.0
+    #NORM = getNORM(ADC_values, calculated_baseline)
+    NORM = 1.0
     for i in range(len(average_pulse_trace)):
         # print i
         # print (ADC_values[int(peak_cell)-60+i])
@@ -501,10 +501,10 @@ if __name__ == '__main__':
     DATA_PATH = "/unix/nemo3/SN_Calo_Commissioning_Runs/GVETO_XWALL_Runs/"
     OUTPUT_PATH = "/home/wquinn/GV_XW_ComData/"
 
-    topology = [16,16]
+    topology = [20,20]
     trigger_point = 160
     pulse_length= 1024
-    template_num = [14,15]
+    template_num = [0,1]
 
     main(run,DATA_PATH,OUTPUT_PATH,topology,trigger_point,pulse_length,template_num)
 
