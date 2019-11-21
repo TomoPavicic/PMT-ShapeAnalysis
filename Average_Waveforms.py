@@ -12,9 +12,20 @@ import time
 start = time.time()
 
 from ROOT import TFile, TH1F, TH2F, TMultiGraph, TGraph, TCanvas, TH2I
+import matplotlib.pyplot as plt
+import numpy as np
 from math import log10
 from numpy import sqrt
 
+'''template_vector = []
+for i in range(110):
+    template_vector.append(0)
+for i in range(40):
+    template_vector.append(-(i+1))
+for i in range(40):
+    template_vector.append(-(39 - i))
+for i in range(110):
+    template_vector.append(0)'''
 
 def getNORM(ADC_values, calculated_baseline):
     intermediate_normalisation_factor = 0
@@ -23,11 +34,111 @@ def getNORM(ADC_values, calculated_baseline):
     normalisation_factor = abs(intermediate_normalisation_factor) ** (0.5)
     return normalisation_factor
 
+'''template_NORM = getNORM(template_vector,0)
+for i in range(len(template_vector)):
+    template_vector[i] = template_vector[i]/template_NORM'''
+
+def createTemplate(PMT_data_filename,topology,waveform_length,pre_PULSE_region):
+    try:
+        PMT_Data_file = open(PMT_data_filename, 'r')
+    except:
+        raise Exception("Error opening data file. Template not created... ")
+
+    newWaveform = False
+    line_number = 0
+    template_length = 300
+    waveform_num_vector = [[0 for i in range(topology[0])] for j in range(topology[1])]
+    template = [[[0 for k in range(template_length)] for i in range(topology[0])] for j in range(topology[1])]
+
+    for index, line in enumerate(PMT_Data_file.readlines()[10:]):
+        info = line.split(" ")
+
+        if info[0] == "=" and info[1] == "HIT":
+            newWaveform = True
+            line_number = 0
+        else:
+            pass
+
+        if newWaveform and line_number == 1:
+            sl = int(info[1])
+            ch = int(info[3])
+            peak_cell = int(info[27])
+
+            # Maybe add in a blank waveform counter
+
+        elif newWaveform and line_number == 2 and len(info)-1 == waveform_length:
+            ADC_values = []
+            for i_ADC in range(waveform_length):
+                ADC_values.append(float(info[i_ADC]))
+
+            Calculated_Baseline = getBaseline(ADC_values, pre_PULSE_region)
+            cal_amplitude = getAmplitude(ADC_values, Calculated_Baseline, peak_cell)
+
+            temp_template = template[sl][ch]
+
+            if abs(cal_amplitude) > 200:
+                for i in range(template_length):
+                    temp_template[i] += ADC_values[peak_cell - 75 + i] - Calculated_Baseline
+                waveform_num_vector[sl][ch] += 1
+
+
+        line_number += 1
+
+    PMT_Data_file.close()
+
+    for i in range(len(template)):
+        for j in range(len(template[i])):
+            print("Slot ",i," Channel ",j," Number of waveforms averaged: ",waveform_num_vector[i][j])
+            if waveform_num_vector[i][j] > 0:
+                for k in range(len(template[i][j])):
+                    template[i][j][k] = template[i][j][k]/waveform_num_vector[i][j]
+                template_NORM = getNORM(template[i][j], 0)
+                if template_NORM > 0:
+                    for k in range(len(template[i][j])):
+                        template[i][j][k] = template[i][j][k]/template_NORM
+
+    return template
+
+def shape_test(waveform,pulse_peak_pos,baseline,template_vector):
+    if pulse_peak_pos < 151 or pulse_peak_pos > 500:
+        return 0
+    else:
+        shape_index = 0
+        template_NORM = getNORM(template_vector,0)
+        #print(" ")
+        #print("Template Norm: ",template_NORM)
+        test_vector = []
+        x = []
+        for i in range(len(template_vector)):
+            shape_index += (waveform[pulse_peak_pos-75+i]-baseline)*template_vector[i]
+            test_vector.append(waveform[pulse_peak_pos-75+i]-baseline)
+            x.append(i)
+        test_NORM = getNORM(test_vector,0)
+        #print("Test Norm1: ", test_NORM)
+        #for i in range(len(test_vector)):
+        #    print("Value before: ",test_vector[i])
+        #    test_vector[i] = test_vector[i]/test_NORM
+        #    print("Value after: ", test_vector[i])
+        #test_NORM_2 = getNORM(test_vector, 0)
+        #print("Test Norm2: ", test_NORM_2)
+
+        y1 = np.array(template_vector)
+        y2 = np.array(test_vector)
+        shape_index = shape_index/test_NORM
+        #print("Shape: ", shape_index)
+        plt.plot(x,y1,'b',label='Template (arbitrary scale)')
+        plt.plot(x,y2/test_NORM,'r',label='PMT waveform')
+        #plt.title("")
+        plt.grid(True)
+        plt.legend()
+        plt.ylabel('ADC Counts /mV')
+        plt.xlabel('Timestamp /ns')
+        plt.show()
+        return shape_index
 
 def getAmplitude(ADC_values,calculated_baseline,peak_cell):
     amplitude = float(ADC_values[peak_cell]) - calculated_baseline
     return amplitude
-
 
 def UpdateAveragePulse(average_pulse_trace, ADC_values,calculated_baseline,peak_cell):
     #NORM = getNORM(ADC_values, calculated_baseline)
@@ -39,7 +150,6 @@ def UpdateAveragePulse(average_pulse_trace, ADC_values,calculated_baseline,peak_
         average_pulse_trace[i] += (float(ADC_values[i]) - calculated_baseline) / NORM
     return average_pulse_trace
 
-
 def getTotalArea(ADC_values, pre_PULSE_region, calculated_baseline, waveform_length):
     integrated_area = 0
     for i in range(pre_PULSE_region, waveform_length):
@@ -48,7 +158,6 @@ def getTotalArea(ADC_values, pre_PULSE_region, calculated_baseline, waveform_len
     Total_Area = abs(integrated_area)
     return Total_Area
 
-
 def getBaseline(ADC_values, pre_PULSE_region):
     calculated_baseline = 0
     pre_TRIGGER_region = pre_PULSE_region - 40
@@ -56,7 +165,6 @@ def getBaseline(ADC_values, pre_PULSE_region):
         calculated_baseline += float(ADC_values[i])
     averaged_calculated_baseline = calculated_baseline / pre_TRIGGER_region
     return averaged_calculated_baseline
-
 
 def getBaselineAmplitude(ADC_values, pre_PULSE_region):
     baseline_calculated = getBaseline(ADC_values, pre_PULSE_region)
@@ -67,15 +175,13 @@ def getBaselineAmplitude(ADC_values, pre_PULSE_region):
             neg_amp = float(ADC_values[i])
     return neg_amp
 
-
-def Read_Data(PMT_data_filename,pre_PULSE_region,waveform_length,average_pulse_counter_vector,event_num_HT_vector,event_num_LTO_vector,average_pulse_trace_vector,Spectra_hist_vector,Spectra_cal_hist_vector,Rise_Time_hist_vector,Peak_Cell_hist_vector,Amplitude_hist_vector,Ratio_hist_vector,blank_num_vector):
+def Read_Data(PMT_data_filename,pre_PULSE_region,average_pulse_counter_vector,event_num_HT_vector,event_num_LTO_vector,average_pulse_trace_vector,Spectra_hist_vector,Spectra_cal_hist_vector,Rise_Time_hist_vector,Peak_Cell_hist_vector,Amplitude_hist_vector,Ratio_hist_vector,amp_shape_vector,blank_num_vector,waveform_length,template):
 
     try:
         PMT_Data_file = open(PMT_data_filename, 'r')
     except FileNotFoundError as fnf_error:
         print(fnf_error)
         raise Exception("Error opening data file. Skip to the next file...")
-        return
 
     newWaveform = False
     line_number = 0
@@ -128,6 +234,7 @@ def Read_Data(PMT_data_filename,pre_PULSE_region,waveform_length,average_pulse_c
 
             cal_charge = getTotalArea(ADC_values, pre_PULSE_region, Calculated_Baseline,waveform_length)
             cal_amplitude = getAmplitude(ADC_values,Calculated_Baseline,peak_cell)
+            shape_index = shape_test(ADC_values,peak_cell,Calculated_Baseline,template[sl][ch])
 
             if cal_charge > 0:
                 Ratio = abs(cal_amplitude / cal_charge)
@@ -139,6 +246,9 @@ def Read_Data(PMT_data_filename,pre_PULSE_region,waveform_length,average_pulse_c
             Rise_Time_hist_vector[sl][ch].Fill(rise_time)
             Amplitude_hist_vector[sl][ch].Fill(abs(cal_amplitude))
             Ratio_hist_vector[sl][ch].Fill(Ratio)
+            #print("amp: ",cal_amplitude," shape: ",shape_index)
+            #print("Amplitude: ",abs(cal_amplitude)," Shape: ",shape_index)
+            amp_shape_vector[sl][ch].Fill(abs(cal_amplitude),shape_index)
 
             if average_pulse_counter_vector[sl][ch] < 100:
                 average_pulse_trace_vector[sl][ch] = UpdateAveragePulse(average_pulse_trace_vector[sl][ch], ADC_values,Calculated_Baseline,peak_cell)
@@ -146,13 +256,14 @@ def Read_Data(PMT_data_filename,pre_PULSE_region,waveform_length,average_pulse_c
 
         line_number += 1
 
+    PMT_Data_file.close()
+
 def getDataFiles(DataFiles_filename):
     DataFiles = open(DataFiles_filename, 'r')
     Data_files_list = []
     for line in DataFiles.readlines():
         Data_files_list.append(str(line))
     return Data_files_list
-
 
 def AnalyseWaveforms(topology, PATH, PMT_data_filenames, root_filename, pre_PULSE_region, waveform_length):
     try:  # Will not create a new file if one exists already
@@ -162,7 +273,7 @@ def AnalyseWaveforms(topology, PATH, PMT_data_filenames, root_filename, pre_PULS
         print(">>> File not found")
         print(">>> Creating .root file with the Average Waveforms")
 
-        root_file = TFile(root_filename, 'update')
+        root_file = TFile(root_filename, 'RECREATE')
 
         # First create all the conatiners for the histograms
 
@@ -176,6 +287,7 @@ def AnalyseWaveforms(topology, PATH, PMT_data_filenames, root_filename, pre_PULS
         Rise_Time_hist_vector = []
         Amplitude_hist_vector = []
         Ratio_hist_vector = []
+        amp_shape_vector = []
         Average_Waveform_hist_vector = []
 
         # Create a blank waveform for each OM
@@ -200,6 +312,7 @@ def AnalyseWaveforms(topology, PATH, PMT_data_filenames, root_filename, pre_PULS
             average_pulse_counter_vector.append([])
             event_num_HT_vector.append([])
             event_num_LTO_vector.append([])
+            amp_shape_vector.append([])
             blank_num_vector.append([])
 
             for channel_num in range(topology[1]):
@@ -228,6 +341,11 @@ def AnalyseWaveforms(topology, PATH, PMT_data_filenames, root_filename, pre_PULS
                 Ratio_hist.GetXaxis().SetTitle("Amplitude/Raw Charge")
                 Ratio_hist_vector[slot_num].append(Ratio_hist)
 
+                amp_shape_hist = TH2F("amp_shape"+str(slot_num)+"_"+str(channel_num),"amp_shape"+str(slot_num)+"_"+str(channel_num),30,0,200,30,0.9,1)
+                amp_shape_hist.GetXaxis().SetTitle("Amplitude /mV")
+                amp_shape_hist.GetYaxis().SetTitle("Shape")
+                amp_shape_vector[slot_num].append(amp_shape_hist)
+
                 average_pulse_trace_vector[slot_num].append([0]*waveform_length)
                 average_pulse_counter_vector[slot_num].append(0)
                 event_num_HT_vector[slot_num].append(0)
@@ -247,6 +365,9 @@ def AnalyseWaveforms(topology, PATH, PMT_data_filenames, root_filename, pre_PULS
                 del Ratio_hist
                 del average_pulse_trace_hist
 
+        print(">>> Create Templates... ")
+        template = createTemplate(PATH + PMT_data_filenames[0].rstrip(),topology,waveform_length,pre_PULSE_region)
+
         # Now run ove the files
         print(">>> Reading Data Files... ")
         processing_start = time.time()
@@ -255,7 +376,6 @@ def AnalyseWaveforms(topology, PATH, PMT_data_filenames, root_filename, pre_PULS
             print (">>> File: ", PATH + PMT_data_filenames[file_num].rstrip())
             Read_Data(PATH + PMT_data_filenames[file_num].rstrip(),
                       pre_PULSE_region,
-                      waveform_length,
                       average_pulse_counter_vector,
                       event_num_HT_vector,
                       event_num_LTO_vector,
@@ -266,7 +386,11 @@ def AnalyseWaveforms(topology, PATH, PMT_data_filenames, root_filename, pre_PULS
                       Peak_Cell_hist_vector,
                       Amplitude_hist_vector,
                       Ratio_hist_vector,
-                      blank_num_vector)
+                      amp_shape_vector,
+                      blank_num_vector,
+                      waveform_length,
+                      template)
+
             intermidiate = time.time()
             time_length = intermidiate - processing_start
             print(">>>\n>>>  %.3f seconds.\n" % (intermidiate-temp_start))
@@ -291,6 +415,7 @@ def AnalyseWaveforms(topology, PATH, PMT_data_filenames, root_filename, pre_PULS
                 Amplitude_hist_vector[slot_num][channel_num].Write("", TFile.kOverwrite)
                 Peak_Cell_hist_vector[slot_num][channel_num].Write("", TFile.kOverwrite)
                 Ratio_hist_vector[slot_num][channel_num].Write("", TFile.kOverwrite)
+                amp_shape_vector[slot_num][channel_num].Write("",TFile.kOverwrite)
 
                 for bin in range(len(average_pulse_trace_vector[slot_num][channel_num])):
                     # Avoid dividing by zero
@@ -322,7 +447,6 @@ def AnalyseWaveforms(topology, PATH, PMT_data_filenames, root_filename, pre_PULS
 
     print(">>>")
 
-
 def createTemplateVector(Directory,template_num, waveform_length, pre_PULSE_region):
     Directory.cd()
     selected_average_waveform_trace = Directory.Get("Waveform_" + str(template_num[0]) + "_" + str(template_num[1]) + "_average")
@@ -346,7 +470,6 @@ def createTemplateVector(Directory,template_num, waveform_length, pre_PULSE_regi
     del selected_average_waveform_trace
 
     return template_vector, normalisation_factor
-
 
 def checkWaveforms(root_filename, topology, waveform_length, pre_PULSE_region, template_num):
     print(">>> Checking the shapes of the waveforms... ")
@@ -425,7 +548,56 @@ def checkWaveforms(root_filename, topology, waveform_length, pre_PULSE_region, t
     shape_index_2D_hist.Write("", TFile.kOverwrite)
     root_file.Close()
 
+def plotHists(root_filename,topology):
+    print(">>> Plotting Hists")
+    try:
+        test_file = open(root_filename, "r")
+    except:
+        raise Exception("Error opening .root file. TERMINATING.")
 
+    root_file = TFile(root_filename,"READ")
+
+    for slot_num in range(topology[0]):
+        Slot = root_file.GetDirectory("Slot"+str(slot_num))
+        #print(Slot)
+        if Slot == None:
+            pass
+        else:
+            print("Slot: ",slot_num)
+            for channel_num in range(topology[1]):
+                print("amp_shape"+str(slot_num)+"_"+str(channel_num))
+                plot = False
+                try:
+                    hist = (TH2F)(root_file.GetDirectory("Slot"+str(slot_num)).GetDirectory("Channel"+str(channel_num)).Get("amp_shape"+str(slot_num)+"_"+str(channel_num)))
+                    plot = True
+                except:
+                    pass
+
+                if plot:
+                    x_bins = hist.GetNbinsX()
+                    y_bins = hist.GetNbinsY()
+                    #print("xbins: ", x_bins)
+                    #print("ybins: ", y_bins)
+                    x = []
+                    y = []
+                    for i in range(x_bins):
+                        for j in range(y_bins):
+                            if hist.GetBinContent(i, j) > 0:
+                                print("Contents bin x: ",i," y: ",j," - ",hist.GetBinContent(i, j))
+                            for k in range(int(hist.GetBinContent(i, j))):
+                                x.append(i)
+                                y.append(j)
+                    if x_bins > 0 and y_bins > 0:
+                        plt.hist2d(x, y, bins=[x_bins, y_bins], range=[[0, 200], [0.9, 1]])
+                        plt.show()
+
+                    del hist
+
+
+                #input(">>> ")
+    root_file.Close()
+
+'''
 def CheckWaveformsAgain(PATH, root_filename, PMT_data_filenames, topology, waveform_length, pre_PULSE_region):
     try:
         test_file = open(root_filename, "r")
@@ -468,6 +640,7 @@ def CheckWaveformsAgain(PATH, root_filename, PMT_data_filenames, topology, wavef
     shape_index_2D_hist3.Write()
 
     print(shape_vector)
+'''
 
 
 def main(run,DATA_PATH,ROOT_PATH,topology,trigger_point,pulse_length,template_num):
@@ -479,14 +652,16 @@ def main(run,DATA_PATH,ROOT_PATH,topology,trigger_point,pulse_length,template_nu
 
     AnalyseWaveforms(topology, DATA_PATH, Data_files, ROOT_PATH + root_filename, trigger_point, pulse_length)
 
-    checkWaveforms(ROOT_PATH + root_filename, topology, pulse_length, trigger_point,template_num)
+    #plotHists( ROOT_PATH + root_filename,topology)
+
+    #checkWaveforms(ROOT_PATH + root_filename, topology, pulse_length, trigger_point,template_num)
 
     # CheckWaveformsAgain(DATA_PATH,ROOT_PATH+root_filename,Data_files,topology,pulse_length,trigger_point)
 
 
 if __name__ == '__main__':
     print (">>> Input the run number: ")
-    run = str(raw_input(">>> "))
+    run = str(input(">>> "))
     print(">>>")
     '''
     print (">>> Input the Data PATH: ")
@@ -498,8 +673,10 @@ if __name__ == '__main__':
     '''
 
     #run = "214"
-    DATA_PATH = "/unix/nemo3/SN_Calo_Commissioning_Runs/GVETO_XWALL_Runs/"
-    OUTPUT_PATH = "/home/wquinn/GV_XW_ComData/"
+    #DATA_PATH = "/unix/nemo3/SN_Calo_Commissioning_Runs/GVETO_XWALL_Runs/"
+    #OUTPUT_PATH = "/home/wquinn/GV_XW_ComData/"
+    DATA_PATH = "/Users/willquinn/Documents/PhD/SuperNEMO/SNEMO_ComData_Analysis/GV_XW_ComData/Data/"
+    OUTPUT_PATH = "/Users/willquinn/Documents/PhD/SuperNEMO/SNEMO_ComData_Analysis/GV_XW_ComData/Output_files/"
 
     topology = [20,20]
     trigger_point = 160
