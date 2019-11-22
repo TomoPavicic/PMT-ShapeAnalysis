@@ -674,7 +674,7 @@ if __name__ == '__main__':
     '''
 
     DATA_PATH = "/unix/nemo3/SN_Calo_Commissioning_Runs/MAIN_WALL_Runs/"
-    OUTPUT_PATH = "/home/wquinn/SNEMO_Commissioning_PMT_Data/MAIN_WALL/ROOT_files"
+    OUTPUT_PATH = "/home/wquinn/SNEMO_Commissioning_PMT_Data/MAIN_WALL/ROOT_files/"
 
     topology = [20,20]
     trigger_point = 160
