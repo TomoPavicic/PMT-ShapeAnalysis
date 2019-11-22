@@ -2,7 +2,7 @@
     for(int file_num = 180;file_num<181;file_num++)
     {
         char filename[100];
-        sprintf(filename,"/home/wquinn/SNEMO_Commissioning_PMT_Data/MAIN_WALL/ROOT_files/Average_Waveforms_run%i.root",file_num);
+        sprintf(filename,"/Users/willquinn/Documents/PhD/SuperNEMO/SNEMO_ComData_Analysis/MAIN_WALL/ROOT_files/Average_Waveforms_run%i.root",file_num);
         TFile* rootfile = new TFile(filename,"READ");
         if (rootfile == nullptr)
         {
@@ -26,16 +26,16 @@
                         {
                             cout << "Channel: "<<channel_num<<endl;
                             char Shape_Number[30];
-                            sprintf(Shape_Number,"Waveform_%i_%i_average",slot_num,channel_num);
+                            sprintf(Shape_Number,"amp_shape%i_%i",slot_num,channel_num);
                             TH2F* hist = (TH2F*)rootfile->GetDirectory(Slot_Num)->GetDirectory(Channel_Num)->Get(Shape_Number);
 
                             if(hist != nullptr)
                             {
                                 cout<<"hist: "<<Shape_Number<<endl;
                                 char CanvasPDFName[100];
-                                sprintf(CanvasPDFName,"/home/wquinn/SNEMO_Commissioning_PMT_Data/MAIN_WALL/PDFs/run%i/AverageWaveforms/AverageWaveform_%i_%i_%i.pdf",file_num,file_num,slot_num,channel_num);
+                                sprintf(CanvasPDFName,"/Users/willquinn/Documents/PhD/SuperNEMO/SNEMO_ComData_Analysis/MAIN_WALL/PDFs/run%i/shape_vs_amplitude/shape_vs_amplitude_%i_%i_%i.pdf",file_num,file_num,slot_num,channel_num);
                                 TCanvas* c1 = new TCanvas(CanvasPDFName);
-                                hist->Draw();
+                                hist->Draw("colz");
                                 gStyle->SetOptStat(0);
                                 c1->Update();
                                 c1->SaveAs(CanvasPDFName,"pdf");
@@ -49,7 +49,7 @@
                 }
             }
         }
-
+        rootfile->Close();
         delete rootfile;
     }
 }

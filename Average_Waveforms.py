@@ -249,7 +249,8 @@ def Read_Data(PMT_data_filename,pre_PULSE_region,average_pulse_counter_vector,ev
             Ratio_hist_vector[sl][ch].Fill(Ratio)
             #print("amp: ",cal_amplitude," shape: ",shape_index)
             #print("Amplitude: ",abs(cal_amplitude)," Shape: ",shape_index)
-            amp_shape_vector[sl][ch].Fill(abs(cal_amplitude),shape_index)
+            if abs(cal_amplitude) > 49:
+                amp_shape_vector[sl][ch].Fill(abs(cal_amplitude),shape_index)
 
             if average_pulse_counter_vector[sl][ch] < 100:
                 average_pulse_trace_vector[sl][ch] = UpdateAveragePulse(average_pulse_trace_vector[sl][ch], ADC_values,Calculated_Baseline,peak_cell)
