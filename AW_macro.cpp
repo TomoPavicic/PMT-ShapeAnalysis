@@ -24,7 +24,7 @@
 
                         if (Channel != nullptr)
                         {
-                            //cout << "Channel: "<<channel_num<<endl;
+                            cout << "Channel: "<<channel_num<<endl;
                             char Shape_Number[30];
                             sprintf(Shape_Number,"Waveform_%i_%i_average",slot_num,channel_num);
                             TH2F* hist = (TH2F*)rootfile->GetDirectory(Slot_Num)->GetDirectory(Channel_Num)->Get(Shape_Number);
