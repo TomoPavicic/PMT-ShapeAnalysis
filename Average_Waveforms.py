@@ -66,7 +66,7 @@ def createTemplate(PMT_data_filename,topology,waveform_length,pre_PULSE_region):
 
             # Maybe add in a blank waveform counter
 
-        elif newWaveform and line_number == 2 and len(info)-1 == waveform_length:
+        elif newWaveform and line_number == 2 and len(info)-1 == waveform_length and waveform_num_vector[sl][ch] < 100:
             ADC_values = []
             for i_ADC in range(waveform_length):
                 ADC_values.append(float(info[i_ADC]))
@@ -76,13 +76,14 @@ def createTemplate(PMT_data_filename,topology,waveform_length,pre_PULSE_region):
 
             temp_template = template[sl][ch]
 
-            if abs(cal_amplitude) > 200:
+            if abs(cal_amplitude) > 200 and abs(cal_amplitude) < 300:
                 for i in range(template_length):
                     temp_template[i] += ADC_values[peak_cell - 75 + i] - Calculated_Baseline
                 waveform_num_vector[sl][ch] += 1
 
 
         line_number += 1
+
 
     PMT_Data_file.close()
 
