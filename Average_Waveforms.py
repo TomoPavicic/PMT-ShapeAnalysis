@@ -99,7 +99,7 @@ def createTemplate(PMT_data_filename,topology,waveform_length,pre_PULSE_region):
 
     return template
 
-def shape_test(waveform,pulse_peak_pos,baseline,template_vector):
+def shape_test(waveform,pulse_peak_pos,baseline,template_vector,slot,channel):
     if pulse_peak_pos < 151 or pulse_peak_pos > 500:
         return 0
     else:
@@ -126,14 +126,14 @@ def shape_test(waveform,pulse_peak_pos,baseline,template_vector):
         y2 = np.array(test_vector)
         shape_index = shape_index/test_NORM
         #print("Shape: ", shape_index)
-        plt.plot(x,y1,'b',label='Template (arbitrary scale)')
-        plt.plot(x,y2/test_NORM,'r',label='PMT waveform')
-        #plt.title("")
-        plt.grid(True)
-        plt.legend()
-        plt.ylabel('ADC Counts /mV')
-        plt.xlabel('Timestamp /ns')
-        plt.show()
+        #plt.plot(x,y1*test_NORM,'b',label='Template (arbitrary scale)')
+        #plt.plot(x,y2,'r',label='PMT waveform')
+        #plt.title("Slot: "+str(slot)+" Channel: "+str(channel)+" Shape: "+str(shape_index))
+        #plt.grid(True)
+        #plt.legend()
+        #plt.ylabel('ADC Counts /mV')
+        #plt.xlabel('Sample Timestamp')
+        #plt.show()
         return shape_index
 
 def getAmplitude(ADC_values,calculated_baseline,peak_cell):
@@ -234,7 +234,7 @@ def Read_Data(PMT_data_filename,pre_PULSE_region,average_pulse_counter_vector,ev
 
             cal_charge = getTotalArea(ADC_values, pre_PULSE_region, Calculated_Baseline,waveform_length)
             cal_amplitude = getAmplitude(ADC_values,Calculated_Baseline,peak_cell)
-            shape_index = shape_test(ADC_values,peak_cell,Calculated_Baseline,template[sl][ch])
+            shape_index = shape_test(ADC_values,peak_cell,Calculated_Baseline,template[sl][ch],sl,ch)
 
             if cal_charge > 0:
                 Ratio = abs(cal_amplitude / cal_charge)
@@ -341,7 +341,7 @@ def AnalyseWaveforms(topology, PATH, PMT_data_filenames, root_filename, pre_PULS
                 Ratio_hist.GetXaxis().SetTitle("Amplitude/Raw Charge")
                 Ratio_hist_vector[slot_num].append(Ratio_hist)
 
-                amp_shape_hist = TH2F("amp_shape"+str(slot_num)+"_"+str(channel_num),"amp_shape"+str(slot_num)+"_"+str(channel_num),30,0,200,30,0.9,1)
+                amp_shape_hist = TH2F("amp_shape"+str(slot_num)+"_"+str(channel_num),"amp_shape"+str(slot_num)+"_"+str(channel_num),100,0,2000,100,0,1)
                 amp_shape_hist.GetXaxis().SetTitle("Amplitude /mV")
                 amp_shape_hist.GetYaxis().SetTitle("Shape")
                 amp_shape_vector[slot_num].append(amp_shape_hist)
@@ -672,11 +672,8 @@ if __name__ == '__main__':
     print(">>> Analysing...")
     '''
 
-    #run = "214"
-    #DATA_PATH = "/unix/nemo3/SN_Calo_Commissioning_Runs/GVETO_XWALL_Runs/"
-    #OUTPUT_PATH = "/home/wquinn/GV_XW_ComData/"
-    DATA_PATH = "/Users/willquinn/Documents/PhD/SuperNEMO/SNEMO_ComData_Analysis/GV_XW_ComData/Data/"
-    OUTPUT_PATH = "/Users/willquinn/Documents/PhD/SuperNEMO/SNEMO_ComData_Analysis/GV_XW_ComData/Output_files/"
+    DATA_PATH = "/unix/nemo3/SN_Calo_Commissioning_Runs/MAIN_WALL_Runs/"
+    OUTPUT_PATH = "/home/wquinn/SNEMO_Commissioning_PMT_Data/MAIN_WALL/ROOT_files"
 
     topology = [20,20]
     trigger_point = 160
