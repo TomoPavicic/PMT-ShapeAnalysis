@@ -31,6 +31,7 @@
 
                             if(hist != nullptr)
                             {
+                                cout<<"hist: "<<Shape_Number<<endl;
                                 char CanvasPDFName[100];
                                 sprintf(CanvasPDFName,"/home/wquinn/SNEMO_Commissioning_PMT_Data/MAIN_WALL/PDFs/run%i/AverageWaveforms/AverageWaveform_%i_%i_%i.pdf",file_num,file_num,slot_num,channel_num);
                                 TCanvas* c1 = new TCanvas(CanvasPDFName);
