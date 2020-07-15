@@ -1,0 +1,51 @@
+This is a config file for the SNEMO commissioning analysis
+Any line that begins with a # will be read by the functions within the PMT_Classes
+
+Note that the syntax of the # line is very important if you are adding things
+
+# charge_cut : 0
+Units of pC here. Sets the trigger status if the pulse charge goes above this value
+Note that this doesn't matter here as the hardware have their own cuts
+
+# sweep_range : 0,100
+The start and finish position for a sweep - integers
+
+# pulse_time_threshold : 100
+The pmt pulses should occur past this point - filters out blank waveforms
+
+# nbins : 200
+Number of bins in the output root histograms
+
+# charge_range : 0,2000
+Range for the charge histograms both afterpulse and pulse
+
+# amp_range : 0,2000
+Range for the pulse amplitude spectrum histograms
+
+# mf_shape_range : -1,1
+Range for the matched filter shape histograms
+
+# mf_amp_range : 0,5000
+Range for the matched filter amplitude spectrum histograms
+
+# apulse_region : 500
+Define the region within the waveform that is the afterpulse region
+
+# resistance : 50
+Define the resistance that the pmt read out is read, default is 50 Ohms
+
+# mf_shape_threshold : 0.8
+Define the matched filter shape cut off
+
+# mf_amp_threshold : 1
+Define the matched filter amplitude cut off
+
+# waveform_length : 1024
+Define the known waveform length
+
+# baseline : 2045
+Define the known baseline
+
+# trigger_point : 100
+
+# integration : 3,3

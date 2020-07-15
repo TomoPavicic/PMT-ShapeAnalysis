@@ -1,27 +1,157 @@
-# PMT-ShapeAnalysis
-Calorimeter Commissioning Data PMT waveform shape analysis
-NOTE: This is for use on CRD files. This work will be integrated into the SNFEE software. I will note when the very last commit is made at the end of the this file
+# PMT_Analysis
 
-AverageWaveforms.py
+Set Up
+------
 
-    This file takes the raw CRD files and creates a series of Average Waveforms for each OM in the file. The OM is specified as follows:
+This repo contains a Class file for reading any form of PMT waveform.
 
-    Slot X    - (0 - 29 for the main wall)
-    Channel Y - (0 - 12 for the main wall)
+Requirements to use this code:
+  - Must have python3
+  - Must have pyroot
+  
+I include here, as it may be useful to others a quick tutorial in how to set up these two things. However, I will only do so for Mac OS as I have only figured it out for such.
 
-    You can define X and Y in the topology part of the main() function.
+First get Homebrew installed - https://brew.sh
 
-    For the X-Wall and G-Veto OMs, specify this in the main() function and set the topology to the maximal Slot and Channel numbers. The output plots will reflect the actual OM layout
+Then install python3 and pip3:
 
-    The High Threshold HT has a value of 1 or 0 - 1 means triggers both LT and HT
-    The Low Threshold Only LTO has 1 or 0 aswell - 1 means trigger low Threshold
+  	$ brew install python3
+  	$ brew install pip3
+  
+Now we have to install root. This is not simple as if you run brew install root6, it will work, but not for python3. Brew uses as default python2 and when you build root in this manner, importing it into python3 doesn't work. I you want to use python2 then you have no issue.
 
-    This code maps the event rate within the data files for both the LTO and HT individually and for the sum. The Average waveforms will loop over a selected sample (defined in the function getAverageWaveforms).
+We have to build root from source. Just incase, you'll need:
 
-    Once the Average waveforms are collected, the function checkWaveforms() is called. This creates a template (defined when calling createTemplate function within checkWaveforms) OM average waveform take from one of the OMs. It then performs an inner product between the template and the rest of the average waveforms. These numbers are recorded in the shape 2D histogram. With a good choice of template any poor SHAPE INDEX (SI) values may indicate a poor PMT and the average waveforms should be checked. Further investigation of issues can be found by looking at some of the recorded sample waveforms.
+  	$ brew install cmake
+  	$ brew install make
+  
+Now go to root https://root.cern.ch/releases and get the latest release. Download this file to /usr/local and unzip. you willneed root priveleges.
 
-The other files are less relevant to my analysis. "shape_index.cpp" is a C++ version of AverageWaveforms.py. Spectra.cpp collects the areas of each spectrum which can be converted to charge (and energy) and creates a spectra for each OM
+Type the following:
 
-Mapping is redundant but is included for completeness. It maps the events recorded in the data file (as done in AverageWaveforms)
+  	$ sudo mkdir root6
+  	$ cd root6
+  
+The next one is important you know which version of python you have downloaded (type python3 --version). Also change $Directory$ in the next line to the unzipped file you got from root-cern website:
 
-Pulse_Modelling.cpp is in it's infancy but will be the code to run when modelling the PMT pulses.
+  	$ sudo cmake ../$Directory$ -DPYTHON_EXECUTABLE=/usr/local/bin/python3 -DPYTHON_INCLUDE_DIR=/usr/local/Cellar/python/3.7.6_1/Frameworks/Python.framework/Versions/3.7/lib/libpython3.7.dylib -DPYTHON_LIBRARY=/usr/local/Cellar/python/3.7.6_1/Frameworks/Python.framework/Versions/3.7/lib/libpython3.7.dylib
+  	$ sudo make
+  
+The last line should take a while and you will see a percentage number as the first character in each line.
+
+Now in your .bash_profile add:
+
+  	$ cd /usr/local/root6
+  	$ source bin/thisroot.sh
+  	$ cd $HOME
+
+Once that is done you can now run python and import ROOT. And you shouldn't get any error.
+
+Usage
+-----
+Now you should be able to run the test.py file. This will read a sample set of waveforms I have provided and plot some of these data to the screen and save a few files to a test root file. If this works then everything is running fine. The output file will be in the directory that you clone this repo and I advise you delete it.
+
+The main file to focus on in this repo is the PMT_Classes.py file. The other files are examples of how I am using this code. The code is designed to be universal so that it can read any form of waveform.
+
+With python3, pyroot installed properly and a good IDE you should be able to familiarise yourself with all the functionality of this trivial OOP for PMTs. I have tried to write a function for everything and have made the naming almost too clear so there should be no problem.
+  
+For those with access to the HEP cluster at UCL you can use pc204 or pc202 as both have python3 and root6 set up ready to use - as well as many other modules that this repo uses such as minidom.
+
+I would recommend familiarising oneself with test.py as this file give a crash course in how to use some features of the class structure.
+
+The main structure of this repo is as follows:
+
+PMT_Object.py
+-------------
+Class for each PMT that will hold settings and result histograms. To set up you need to give it a unique name.
+
+This has a set of default settings:
+
+        - charge_cut = 6  # pC
+        - charge_range = [0, 100]
+        - nbins = 100
+        - amp_range = [0, 100]
+        - mf_shape_range = [-1, 1]
+        - mf_amp_range = [0, 100]
+        - sweep_range = [0, 500]
+        - pulse_time_threshold = 100
+        - apulse_region = 500
+        - resistance = 50 # Ohms
+        - mf_shape_threshold = 0.9
+        - mf_amp_threshold = 25
+        - waveform_length = 8000
+
+The names of these settings are very important. use the get/set_setting("name"/"name", value) to access or change. 
+
+The default histograms that are created are:
+
+    - pulse_charge_hist
+    - pulse_amplitude_hist
+    - apulse_charge_hist
+    - pulse_mf_shape_hist
+    - pulse_mf_amplitude_hist
+    - pulse_mf_shape_mf_amplitude_hist
+    - pulse_mf_shape_p_amplitude_hist
+    - pulse_mf_amplitude_p_amplitude
+    - pulse_peak_time_hist
+    - apulse_times_hist
+    
+These names are also important. They all have the ranges and number of bins defined in the setting above. See the set_up_histograms function in PMT_Object.py for more details.
+
+These histograms can be access by member function or by get_histogram("name") function. To fill you  can do either as well.
+
+PMT_Waveform.py
+---------------
+Feed a list of strings, and a PMT_Object, and it will convert that list of strings into a PMT_Waveform object and you can fill the PMT_Object with the analysis from the PMT_Waveform.
+
+Requires you to pass it a PMT_Object.
+
+First it checks the charge of the pmt pulse which it finds automatically. At the moment it defines a fixed window for integration but in the future this window will very depending on the size of the pulse. It then checks the PMT_Object settings for a charge cut. By default, even after applying a setting file [see later in PMT_Array], the charge cut is the only trigger cut. If the charge of the pulse is bigger than the cut value the pmt waveform will trigger to True. This boolean can be used as a descriminator to fill the results of the analysis into the PMT_Object. This avoids null waveforms for example/ empty waveforms.
+
+The reusults it calculates by default are:
+
+            "pulse_charge"      : 0.0,
+            "pulse_amplitude"   : 0.0,
+            "apulse_charge"     : 0.0,
+            "mf_pulse_shape"    : 0.0,
+            "mf_pulse_amp"      : 0.0,
+            "pulse_peak_time"   : self.get_pmt_pulse_peak_position(),
+            "apulse_times"      : []
+            
+These names are again very important. Use get_results("name" )to access these results. I have showed the type of value above so you can be sure to use them correctly.
+
+PMT_Object.py has a function called fill_pmt_hists() which you call after each triggered waveform. See test.py as an example of this.
+
+PMT_Array.py
+------------
+A class to contain multiple PMT_Objects.
+
+Requires parsing a PMT_Object to the class. Depending on the structure you can access these objects by the number they are associated to or the position (if they are in a 2D array). 
+
+There are several functions in this class that make fill the PMT_Objects easier if you have lots of PMTs as well as accessing their results.
+
+If one is not happy with the default settings you can simply call the function apply_setting("config_file_name") which will read all the settings you want from the file. See example_cofig_file.txt to see the format. The format is quite specific but the example makes  it clear. 
+  
+As it stands this applies the same setting to all PMTs. This will become a problem when we want to apply different settings to each PMT, so for now you will have to be more specific for special cases.
+
+Extras
+------
+I have also included some example data reading functions but these I will not explain in detail.
+
+Cluster Running
+---------------
+For those running on the UCL HEP computer cluster, a combination of numpy, scipy, ROOT and other modules may not be properly set up. I recommend pc202 or pc204 as they seem to work. However, the only requirement you really need is that you pc has ROOT for python3. So the first test is to do the following:
+
+    $ python3
+    >>> import ROOT
+    
+If this works with no error then all is good. If not find a PC that this works on. Type the following in the terminal:
+
+    $ virtualenv --python=python3 --system-site-packages myenv
+    $ source myenv/bin/activate
+    $ pip install --upgrade pip
+    $ pip3 install —-upgrade numpy scipy
+    
+You are now in a python3 virtual environment. All the code should now work and you can now download any modules that you may want or need. To deactivate the environment type:
+
+    $ deactivate

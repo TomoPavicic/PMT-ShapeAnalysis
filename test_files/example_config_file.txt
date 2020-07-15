@@ -1,0 +1,35 @@
+This is an example config file.
+When making a config file please give a description of what it is for at the beginning of the file
+Any line that begins with a # will be read by the functions within the PMT_Classes
+
+Note that the syntax of the # line is very important if you are adding things
+
+# charge_cut : 10
+Units of pC here. Sets the trigger status if the pulse charge goes above this value
+
+# sweep_range : 0,500
+The start and finish position for a sweep - integers
+
+# pulse_time_threshold : 100
+The pmt pulses should occur past this point - filters out blank waveforms
+
+# nbins : 100
+Number of bins in the output root histograms
+
+# charge_range : 0,100
+Range for the charge histograms both afterpulse and pulse
+
+# amp_range : 0,100
+Range for the pulse amplitude spectrum histograms
+
+# mf_shape_range : -1,1
+Range for the matched filter shape histograms
+
+# mf_amp_range : 0,100
+Range for the matched filter amplitude spectrum histograms
+
+# apulse_region : 500
+Define the region within the waveform that is the afterpulse region
+
+# resistance : 50
+Define the resistance that the pmt read out is read, default is 50 Ohms
