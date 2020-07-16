@@ -1,18 +1,7 @@
 #!/usr/bin/env bash
 
 # ------------------------------------------------------------------------------------ #
-# Dave Waters, 24.01.20
-#
-# This is a script for launching batch jobs for the analysis of PMT data.
-# You should first test the macro ("root_macro" defined below) interactively and then
-# set the parameters here to run in batch mode.
-#
-# It is assumed that the root macro itself takes care of storing the output in a
-# suitable location and format.
-#
-# History
-# =======
-# [1] 200502 : Initial version
+# William Quinn 15/07/2020
 #
 # USER INPUTS:
 # ============
@@ -37,10 +26,10 @@ ls $root_dir/data/raw_xml_files/*/*.xml /unix/nemo3/PMT_He_Study_nemo3/data/raw_
 data_file_list=`cat $root_dir/batch_files/$script_log_dir/filenames.ascii`
 #
 #
-config_file="$root_dir/supernemopmts/config.conf"
+config_file="$root_dir/PMT-ShapeAnalysis/config_files/pmt_permeation_config_file.txt"
 #
 # ROOT macro to use:
-source_executable="$root_dir/supernemopmts/build/xml_reader"
+source_executable="$root_dir/PMT-ShapeAnalysis/pmt_he_study/build/xml_reader"
 #
 #
 underscore="_"
@@ -69,7 +58,7 @@ do
     # Prepare batch script in a temporary directory (not sure if this is robust)
     touch $root_dir/batch_files/$script_log_dir/scripts/batch_file_$ifile.sh
     chmod a+rwx $root_dir/batch_files/$script_log_dir/scripts/batch_file_$ifile.sh
-    echo "source $root_dir/supernemopmts/setup.sh" >> $root_dir/batch_files/$script_log_dir/scripts/batch_file_$ifile.sh
+    echo "source $root_dir/PMT-ShapeAnalysis/pmt_he_study/setup.sh" >> $root_dir/batch_files/$script_log_dir/scripts/batch_file_$ifile.sh
     echo "echo 'Running batch_file_$ifile.sh ...' >> $root_dir/batch_files/$script_log_dir/logs/batch_file_$ifile.log" >> $root_dir/batch_files/$script_log_dir/scripts/batch_file_$ifile.sh
     echo $interactive_command >> $root_dir/batch_files/$script_log_dir/scripts/batch_file_$ifile.sh
     batch_command="qsub -q $queue $root_dir/batch_files/$script_log_dir/scripts/batch_file_$ifile.sh"
