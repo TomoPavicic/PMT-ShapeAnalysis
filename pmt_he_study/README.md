@@ -1,4 +1,4 @@
-# supernemopmts
+# PMT He Study
 Helium Permeation Project
 
 This repository is for the collation of the data logging and analysis code for this project.
@@ -16,8 +16,20 @@ The aims of this study are as follows:
 - Measure the rate of afterpulsing as a function of exposure
 
 What should be contained in this repository?:
-- The Bi Spectrum analysis code Area_Spectrum.cpp
-- Afterpulse signal processing code sweep_shape_index.cpp
+- The Bi Spectrum analysis code 
+- Afterpulse signal processing code 
 - Any template waveforms that have collected
 
 - Perhaps collate some of the results on here or save on the UCL.hep cluster.
+
+To set up the environment follow these instructions: https://github.com/SuperNEMO-DBD/PMT-ShapeAnalysis/blob/master/README.md
+NOTE: caveat, systems, clusters vary so I cannot provide info on everything. 
+
+The code pipeline should be as follows:
+- build the environenment running cmake and make as per usual.
+- run xml_reader.cpp (can batch). This will create a set of .root files
+- run the ntuple_reader.py in your python3 environment. This will create lots of historgrams which are easier to read
+- to produce summary plots simply run the scripts in the summary file direectories.
+
+Note: each file will tell you how to run the code in the preamble at the top.
+
