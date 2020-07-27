@@ -6,13 +6,7 @@ sys.path.insert(1, '..')
 import ROOT
 import tqdm
 
-# import python plotting and numpy modules
-import matplotlib.pyplot as plt
 import numpy as np
-from scipy.signal import find_peaks
-
-# import stats module
-from scipy.optimize import curve_fit
 
 # import custom made classes
 from functions.other_functions import pmt_parse_arguments
