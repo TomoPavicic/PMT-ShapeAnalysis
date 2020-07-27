@@ -16,7 +16,7 @@ from scipy.optimize import curve_fit
 
 # import custom made classes
 from functions.other_functions import pmt_parse_arguments
-from scr.PMT_Array import PMT_Array
+from src.PMT_Array import PMT_Array
 
 
 def print_settings(pmt_array: PMT_Array):
