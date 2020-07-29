@@ -179,15 +179,15 @@ Int_t main(Int_t argc, char* argv[])
     tree.Branch("event_num_ch1",&description.tot_event_ch1);
 
     // Branch for the storing of the raw waveform
-    tree.Branch("waveform",&waveform);
+    // tree.Branch("waveform",&waveform);
 
     // Branch for the afterpulse analysis
     tree.Branch("apulse_num",&matchfilter.apulse_num);
     tree.Branch("apulse_times",&matchfilter.apulse_times);
     tree.Branch("apulse_amplitudes",&matchfilter.apulse_amplitudes);
     tree.Branch("apulse_shapes",&matchfilter.apulse_shapes);
-    tree.Branch("mf_amplitudes",&matchfilter.mf_amps);
-    tree.Branch("mf_shapes",&matchfilter.mf_shapes);
+    // tree.Branch("mf_amplitudes",&matchfilter.mf_amps);
+    // tree.Branch("mf_shapes",&matchfilter.mf_shapes);
 
     std::ifstream data_file( input_file );
     std::string data_line;
@@ -495,7 +495,7 @@ MATCHFILTER sweep( std::vector<Double_t> &vec, CONF &config, Double_t baseline, 
     // Define some iterators to be used when applying cuts
     Int_t current_apulse = 0;
     // This defines that an afterpulse (a value rising above the cuts) must be separated by the size of
-    // the template to be counted as a new afterpulse
+    // 2* the size of the template to be counted as a new afterpulse
     Int_t previous_apulse = sweep_start - (Int_t)temp.size();
 
     // Create containers for the shape and amplitude convolutions for storing
@@ -507,10 +507,16 @@ MATCHFILTER sweep( std::vector<Double_t> &vec, CONF &config, Double_t baseline, 
     {
         // At each point we will define a test/sample, in which we will look for a pulse via a convolution
         std::vector<Double_t> test;
-
+	//Double_t wkk = 0;
+	//Double_t norm_wkk = 0;
+        //std::cout << "Test vector: " << std::endl;
         for ( Int_t i_vec = 0; i_vec < (Int_t)temp.size(); i_vec++ )
         {
             test.push_back( vec[i_vec + i_sweep] - baseline );
+            //std::cout << i_vec + i_sweep << " : " << vec[i_vec + i_sweep] - baseline << " : " << temp[i_vec] 
+	    //<< " : " << (vec[i_vec + i_sweep] - baseline)*temp[i_vec] << std::endl;
+	    //wkk += (vec[i_vec + i_sweep] - baseline)*temp[i_vec];
+	    //norm_wkk += (vec[i_vec + i_sweep] - baseline)*(vec[i_vec + i_sweep] - baseline);
         }
 
         // Perform the convolution
@@ -518,6 +524,11 @@ MATCHFILTER sweep( std::vector<Double_t> &vec, CONF &config, Double_t baseline, 
         // Double_t temp_norm = get_inner_product( temp, temp );
         Double_t amplitude_index = get_inner_product( test, temp );
         Double_t shape_index = amplitude_index/test_norm;
+	
+	//std::cout << "Addition: " << wkk << " Amp index: " << amplitude_index  << std::endl;
+	//std::cout << "Norm: " << norm_wkk << " sqrt: " << sqrt(norm_wkk) << " Test norm: " << test_norm << std::endl;
+	//std::cout << "shape index: " << shape_index << std::endl;
+	//std::cout << std::endl;
 	
         if (shape_index > 1.0)
         {
