@@ -1,5 +1,5 @@
 import ROOT
-from scr.PMT_Object import PMT_Object
+from src.PMT_Object import PMT_Object
 
 
 class PMT_Array:
