@@ -93,17 +93,20 @@ def read_tree(root_file_name: str, pmt_array: PMT_Array, output_file_location: s
         # Now apply new amplitude and shape cuts
         new_apulse_num = 0
         filer_list = []
-        for i_apulse in range(apulse_num):
-            if apulse_shapes[i_apulse] > pmt_array.get_pmt_object_number(OM_ID).get_setting("mf_shape_threshold")\
-                    and apulse_amplitudes[i_apulse] > pmt_array.get_pmt_object_number(OM_ID).get_setting("mf_amp_threshold")\
-                    and apulse_times[i_apulse] > pmt_array.get_pmt_object_number(OM_ID).get_setting("sweep_range")[0]:
-                filer_list.append(True)
-                new_apulse_num += 1
-                apulse_amplitudes_hists[OM_ID].Fill(apulse_amplitudes[i_apulse])
-                apulse_times_hists[OM_ID].Fill(apulse_times[i_apulse])
-            else:
-                filer_list.append(False)
-        apulse_nums_hists[OM_ID].Fill(new_apulse_num)
+        try:
+            for i_apulse in range(apulse_num):
+                if apulse_shapes[i_apulse] > pmt_array.get_pmt_object_number(OM_ID).get_setting("mf_shape_threshold")\
+                        and apulse_amplitudes[i_apulse] > pmt_array.get_pmt_object_number(OM_ID).get_setting("mf_amp_threshold")\
+                        and apulse_times[i_apulse] > pmt_array.get_pmt_object_number(OM_ID).get_setting("sweep_range")[0]:
+                    filer_list.append(True)
+                    new_apulse_num += 1
+                    apulse_amplitudes_hists[OM_ID].Fill(apulse_amplitudes[i_apulse])
+                    apulse_times_hists[OM_ID].Fill(apulse_times[i_apulse])
+                else:
+                    filer_list.append(False)
+            apulse_nums_hists[OM_ID].Fill(new_apulse_num)
+        except:
+            pass
 
     output_file = ROOT.TFile(output_file_location + "/ROOT_files/" + str(voltage) + "V/" + output_file_name, "RECREATE")
     output_file.cd()
