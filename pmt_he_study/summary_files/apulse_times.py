@@ -1,6 +1,6 @@
 import sys
 
-sys.path.insert(1, '..')
+sys.path.insert(1, '../..')
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,6 +8,9 @@ import ROOT
 import tqdm
 
 from functions.other_functions import io_parse_arguments, process_date, process_exposure
+
+
+names = ['GAO607', 'GAO612']
 
 
 def main():
@@ -29,7 +32,7 @@ def main():
     success_rate = [0, 0]
     num_average = 7
     re_bin = 10
-    number_total_weeks = 35
+    number_total_weeks = 40
     last_temp = [[],[]]
     x_og = []
     num_in_week = [[0 for i in range(number_total_weeks+1)],[0 for i in range(number_total_weeks+1)]]
@@ -39,7 +42,8 @@ def main():
     color = 'g-'
     #for i_file in tqdm.tqdm(range(file_names.size)):
     for i_file in range(file_names.size):
-        file = ROOT.TFile(directory + "/" + file_names[i_file][0].decode("utf-8"), "READ")
+        #print(directory + "/" + file_names[i_file][0].decode("utf-8"))
+        file = ROOT.TFile(directory + file_names[i_file][0].decode("utf-8"), "READ")
         date = file_names[i_file][0].decode("utf-8").split("_")[0]
         exposure = process_exposure(np.array([int(date)]))[0]
         day_num = process_date(np.array([int(date)]))[0]
@@ -47,9 +51,12 @@ def main():
         time = file_names[i_file][0].decode("utf-8").split("_")[1]
 
         if i_file == 0:
-            hist = file.GetDirectory(str(0)).Get("h_apulse_times_Ch" + str(0) + "_hh")
+            name = date + "_" + 'GAO607_apulse_times_1400V'
+            hist = file.Get(name)
             temp = []
             the_bin = 0
+
+            #print(hist.GetNbinsX())
 
             for i_bin in range(hist.GetNbinsX()):
                 if the_bin == 0:
@@ -61,7 +68,7 @@ def main():
 
                 if the_bin == re_bin:
                     temp.append(temp0)
-                    x_og.append(i_bin * hist.GetBinWidth(i_bin) + 800)
+                    x_og.append(i_bin * hist.GetBinWidth(i_bin))
                     the_bin = 0
 
             for i in range(number_total_weeks+1):
@@ -73,7 +80,9 @@ def main():
             continue
 
         for i_channel in range(2):
-            hist = file.GetDirectory(str(i_channel)).Get("h_apulse_times_Ch" + str(i_channel) + "_hh")
+            #print(date + "_" + names[i_channel] + "_apulse_times_1400")
+            hist = file.Get(date + "_" + names[i_channel] + "_apulse_times_1400V")
+            hist_0 = file.Get(date + "_" + names[i_channel] + "_apulse_num_1400V")
 
             try:
                 hist.GetNbinsX()
@@ -95,17 +104,22 @@ def main():
 
                 if the_bin == re_bin:
                     temp.append(temp0)
-                    x.append(i_bin*hist.GetBinWidth(i_bin) + 800)
+                    x.append(i_bin*hist.GetBinWidth(i_bin))
                     the_bin = 0
-            if i_channel == 1:
-                '''if 0 < day_num < 98:
+            if i_channel == 0:
+                if 0 < day_num < 98:
                     color = 'b-'
                 if day_num >= 98:
-                    color = 'r-' '''
-                plt.plot(x, 100 * np.array(temp)/hist.GetEntries(), color)
+                    color = 'r-'
+                plt.plot(x, 100 * np.array(temp)/hist_0.GetEntries(), color)
                 plt.plot(0, 0, 'g-', label="Atmosphere He")
                 plt.plot(0, 0, 'b-', label="1% He")
                 plt.plot(0, 0, 'r-', label="10% He")
+                plt.axvline(1580, ls='--', color='r')
+                plt.axvline(2680, ls='--', color='g')
+                plt.axvline(1290, ls='--', color='k')
+                plt.axvline(2560, ls='--', color='b')
+                plt.axvline(3850, ls='--', color='c')
                 plt.legend(loc="upper right")
                 plt.ylim(0, 6)
                 plt.xlim(800, 7000)
@@ -115,7 +129,7 @@ def main():
                 plt.grid()
                 #plt.yscale('log')
                 plt.show(block=False)
-                plt.pause(0.1)
+                plt.pause(0.05)
                 plt.close()
 
             last_temp[i_channel][week_num] += 100 * np.array(temp)/hist.GetEntries()
@@ -124,7 +138,7 @@ def main():
             del hist
 
         for i_channel in range(2):
-            hist = file.GetDirectory(str(i_channel)).Get("h_apulse_num_Ch" + str(i_channel) + "_hh")
+            hist = file.Get(date + "_" + names[i_channel] + "_apulse_num_1400V")
 
             try:
                 hist.GetNbinsX()
@@ -144,7 +158,7 @@ def main():
         file.Close()
         del file
 
-    '''for i_week in range(len(last_temp[0])):
+    for i_week in range(len(last_temp[0])):
         if i_week < 14:
             color = 'b-'
         elif i_week >= 14:
@@ -164,7 +178,7 @@ def main():
         plt.grid()
         plt.show(block=False)
         plt.pause(0.5)
-        plt.close()''
+        plt.close()
     #plt.rcParams["figure.figsize"] = (20, 20)'''
     '''for i_bin in range(1,len(apulse_num_y[0])):
         ylim = 0

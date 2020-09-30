@@ -4,7 +4,6 @@ sys.path.insert(1, '..')
 
 # import ROOT and bash commands
 import ROOT
-import progressbar
 import tqdm
 
 # import python plotting and numpy modules
@@ -17,8 +16,8 @@ from scipy.optimize import curve_fit
 
 # import custom made classes
 from functions.other_functions import sncd_parse_arguments, get_date_time, get_voltage, fit, chi2
-from scr.PMT_Array import PMT_Array
-from scr.PMT_Waveform import PMT_Waveform
+from src.PMT_Array import PMT_Array
+from src.PMT_Waveform import PMT_Waveform
 
 
 def main():

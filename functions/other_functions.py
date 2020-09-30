@@ -745,6 +745,130 @@ def process_date(date_array: np.array):
             temp_date = 237
         if date == 200630:
             temp_date = 238
+        if date == 200701:
+            temp_date = 239
+        if date == 200702:
+            temp_date = 240
+        if date == 200703:
+            temp_date = 241
+        if date == 200704:
+            temp_date = 242
+        if date == 200705:
+            temp_date = 243
+        if date == 200706:
+            temp_date = 244
+        if date == 200707:
+            temp_date = 245
+        if date == 200708:
+            temp_date = 246
+        if date == 200709:
+            temp_date = 247
+        if date == 200710:
+            temp_date = 248
+        if date == 200711:
+            temp_date = 249
+        if date == 200712:
+            temp_date = 250
+        if date == 200713:
+            temp_date = 251
+        if date == 200714:
+            temp_date = 252
+        if date == 200715:
+            temp_date = 253
+        if date == 200716:
+            temp_date = 254
+        if date == 200717:
+            temp_date = 255
+        if date == 200718:
+            temp_date = 256
+        if date == 200719:
+            temp_date = 257
+        if date == 200720:
+            temp_date = 258
+        if date == 200721:
+            temp_date = 259
+        if date == 200722:
+            temp_date = 260
+        if date == 200723:
+            temp_date = 261
+        if date == 200724:
+            temp_date = 262
+        if date == 200725:
+            temp_date = 263
+        if date == 200726:
+            temp_date = 264
+        if date == 200727:
+            temp_date = 265
+        if date == 200728:
+            temp_date = 266
+        if date == 200729:
+            temp_date = 267
+        if date == 200730:
+            temp_date = 268
+        if date == 200731:
+            temp_date = 268
+        if date == 200801:
+            temp_date = 269
+        if date == 200802:
+            temp_date = 270
+        if date == 200803:
+            temp_date = 271
+        if date == 200804:
+            temp_date = 272
+        if date == 200805:
+            temp_date = 273
+        if date == 200806:
+            temp_date = 274
+        if date == 200807:
+            temp_date = 275
+        if date == 200808:
+            temp_date = 276
+        if date == 200809:
+            temp_date = 277
+        if date == 200810:
+            temp_date = 278
+        if date == 200811:
+            temp_date = 279
+        if date == 200812:
+            temp_date = 280
+        if date == 200813:
+            temp_date = 281
+        if date == 200814:
+            temp_date = 282
+        if date == 200815:
+            temp_date = 283
+        if date == 200816:
+            temp_date = 284
+        if date == 200817:
+            temp_date = 285
+        if date == 200818:
+            temp_date = 286
+        if date == 200819:
+            temp_date = 287
+        if date == 200820:
+            temp_date = 288
+        if date == 200821:
+            temp_date = 289
+        if date == 200822:
+            temp_date = 290
+        if date == 200823:
+            temp_date = 291
+        if date == 200824:
+            temp_date = 292
+        if date == 200825:
+            temp_date = 293
+        if date == 200826:
+            temp_date = 294
+        if date == 200827:
+            temp_date = 295
+        if date == 200828:
+            temp_date = 296
+        if date == 200829:
+            temp_date = 297
+        if date == 200830:
+            temp_date = 298
+        if date == 200831:
+            temp_date = 299
 
         output_list.append(temp_date)
 
@@ -1293,6 +1417,130 @@ def process_exposure(date_array: np.array):
             temp_date = 140/10 + 97/100
         if date == 200630:
             temp_date = 141/10 + 97/100
+        if date == 200701:
+            temp_date = 142/10 + 97/100
+        if date == 200702:
+            temp_date = 143/10 + 97/100
+        if date == 200703:
+            temp_date = 144/10 + 97/100
+        if date == 200704:
+            temp_date = 145/10 + 97/100
+        if date == 200705:
+            temp_date = 146/10 + 97/100
+        if date == 200706:
+            temp_date = 147/10 + 97/100
+        if date == 200707:
+            temp_date = 148/10 + 97/100
+        if date == 200708:
+            temp_date = 149/10 + 97/100
+        if date == 200709:
+            temp_date = 150/10 + 97/100
+        if date == 200710:
+            temp_date = 151/10 + 97/100
+        if date == 200711:
+            temp_date = 152/10 + 97/100
+        if date == 200712:
+            temp_date = 153/10 + 97/100
+        if date == 200713:
+            temp_date = 154/10 + 97/100
+        if date == 200714:
+            temp_date = 155/10 + 97/100
+        if date == 200715:
+            temp_date = 156/10 + 97/100
+        if date == 200716:
+            temp_date = 157/10 + 97/100
+        if date == 200717:
+            temp_date = 158/10 + 97/100
+        if date == 200718:
+            temp_date = 159/10 + 97/100
+        if date == 200719:
+            temp_date = 160/10 + 97/100
+        if date == 200720:
+            temp_date = 161/10 + 97/100
+        if date == 200721:
+            temp_date = 162/10 + 97/100
+        if date == 200722:
+            temp_date = 163/10 + 97/100
+        if date == 200723:
+            temp_date = 164/10 + 97/100
+        if date == 200724:
+            temp_date = 165/10 + 97/100
+        if date == 200725:
+            temp_date = 166/10 + 97/100
+        if date == 200726:
+            temp_date = 167/10 + 97/100
+        if date == 200727:
+            temp_date = 168/10 + 97/100
+        if date == 200728:
+            temp_date = 169/10 + 97/100
+        if date == 200729:
+            temp_date = 170/10 + 97/100
+        if date == 200730:
+            temp_date = 171/10 + 97/100
+        if date == 200731:
+            temp_date = 171/10 + 97/100
+        if date == 200801:
+            temp_date = 172/10 + 97/100
+        if date == 200802:
+            temp_date = 173/10 + 97/100
+        if date == 200803:
+            temp_date = 174/10 + 97/100
+        if date == 200804:
+            temp_date = 175/10 + 97/100
+        if date == 200805:
+            temp_date = 176/10 + 97/100
+        if date == 200806:
+            temp_date = 177/10 + 97/100
+        if date == 200807:
+            temp_date = 178/10 + 97/100
+        if date == 200808:
+            temp_date = 179/10 + 97/100
+        if date == 200809:
+            temp_date = 180/10 + 97/100
+        if date == 200810:
+            temp_date = 181/10 + 97/100
+        if date == 200811:
+            temp_date = 182/10 + 97/100
+        if date == 200812:
+            temp_date = 183/10 + 97/100
+        if date == 200813:
+            temp_date = 184/10 + 97/100
+        if date == 200814:
+            temp_date = 185/10 + 97/100
+        if date == 200815:
+            temp_date = 186/10 + 97/100
+        if date == 200816:
+            temp_date = 187/10 + 97/100
+        if date == 200817:
+            temp_date = 188/10 + 97/100
+        if date == 200818:
+            temp_date = 189/10 + 97/100
+        if date == 200819:
+            temp_date = 190/10 + 97/100
+        if date == 200820:
+            temp_date = 191/10 + 97/100
+        if date == 200821:
+            temp_date = 192/10 + 97/100
+        if date == 200822:
+            temp_date = 193/10 + 97/100
+        if date == 200823:
+            temp_date = 194/10 + 97/100
+        if date == 200824:
+            temp_date = 195/10 + 97/100
+        if date == 200825:
+            temp_date = 196/10 + 97/100
+        if date == 200826:
+            temp_date = 197/10 + 97/100
+        if date == 200827:
+            temp_date = 198/10 + 97/100
+        if date == 200828:
+            temp_date = 199/10 + 97/100
+        if date == 200829:
+            temp_date = 200/10 + 97/100
+        if date == 200830:
+            temp_date = 201/10 + 97/100
+        if date == 200831:
+            temp_date = 202/10 + 97/100
 
         output_list.append(temp_date)
 

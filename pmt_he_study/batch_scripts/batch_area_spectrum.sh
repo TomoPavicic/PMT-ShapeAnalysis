@@ -46,7 +46,7 @@ ls $root_dir/data/raw_xml_files/*/*$voltage* /unix/nemo3/PMT_He_Study_nemo3/data
 data_file_list=`cat $root_dir/PMT-ShapeAnalysis/pmt_he_study/batch_files/$script_log_dir/$file_filenames`
 #
 # ROOT macro to use:
-root_macro="$root_dir/PMT-ShapeAnalysis/pmt_he_study/pmt_charge_spectrum.cpp"
+root_macro="$root_dir/PMT-ShapeAnalysis/pmt_he_study/pmt_charge_analysis.cpp"
 
 echo $voltage
 echo ""
