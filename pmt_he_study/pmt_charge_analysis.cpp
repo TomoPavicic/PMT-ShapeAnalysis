@@ -452,7 +452,7 @@ void fit_function(TFile* rootfile,int channel_classifier, std::vector<Double_t> 
     else{
 
         int bi207_1MeV_peak_position = charge_spectrum->GetMaximumBin()*charge_spectrum->GetBinWidth(2);
-        TCanvas c1 = new TCanvas(canvas_name.c_str(),canvas_name.c_str());
+        TCanvas* c1 = new TCanvas(canvas_name.c_str(),canvas_name.c_str());
 
         if (channel_classifier == 0)
         {
