@@ -452,7 +452,7 @@ void fit_function(TFile* rootfile,int channel_classifier, std::vector<Double_t> 
     else{
 
         int bi207_1MeV_peak_position = charge_spectrum->GetMaximumBin()*charge_spectrum->GetBinWidth(2);
-        TCanvas c1 = TCanvas(canvas_name.c_str(),canvas_name.c_str());
+        TCanvas c1 = new TCanvas(canvas_name.c_str(),canvas_name.c_str());
 
         if (channel_classifier == 0)
         {
@@ -511,16 +511,17 @@ void fit_function(TFile* rootfile,int channel_classifier, std::vector<Double_t> 
         charge_spectrum->SetTitle("Bi Integrated Charge Spectrum");
 
         charge_spectrum->Draw();
-        c1.SetGrid();
-        c1.Update();
-        c1.Draw();
+        c1->SetGrid();
+        c1->Update();
+        c1->Draw();
         gStyle->SetOptFit(1);
         gStyle->SetStatY(0.9);
         gStyle->SetStatX(0.9);
         gStyle->SetStatW(0.8);
         gStyle->SetStatH(0.1);
-        c1.SaveAs(pdf_name.c_str(),"pdf");
+        c1->SaveAs(pdf_name.c_str(),"pdf");
         delete charge_spectrum;
+        delete c1;
     }
     return;
 }
