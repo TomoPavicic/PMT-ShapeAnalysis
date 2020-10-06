@@ -39,8 +39,10 @@ def read_tree(root_file_name: str, pmt_array: PMT_Array, output_file_location: s
     amp_hists = []
     baselines = []
     apulse_nums_hists = []
+    he_apulse_nums_hists = []
     apulse_times_hists = []
     apulse_amplitudes_hists = []
+    he_apulse_amplitudes_hists = []
     for i_om in range(pmt_array.get_pmt_total_number()):
         nbins = pmt_array.get_pmt_object_number(i_om).get_setting("nbins")
 
@@ -56,18 +58,26 @@ def read_tree(root_file_name: str, pmt_array: PMT_Array, output_file_location: s
         apulse_num = ROOT.TH1I(date + "_" + pmt_array.get_pmt_object_number(i_om).get_pmt_id() + "_apulse_num_" + str(voltage) + "V",
                                date + "_" + pmt_array.get_pmt_object_number(i_om).get_pmt_id() + "_apulse_num_" + str(voltage) + "V",
                                20, 0, 20)
+        he_apulse_num = ROOT.TH1I(date + "_" + pmt_array.get_pmt_object_number(i_om).get_pmt_id() + "_he_apulse_num_" + str(voltage) + "V",
+                                  date + "_" + pmt_array.get_pmt_object_number(i_om).get_pmt_id() + "_he_apulse_num_" + str(voltage) + "V",
+                                  20, 0, 20)
         apulse_time = ROOT.TH1I(date + "_" + pmt_array.get_pmt_object_number(i_om).get_pmt_id() + "_apulse_times_" + str(voltage) + "V",
                                 date + "_" + pmt_array.get_pmt_object_number(i_om).get_pmt_id() + "_apulse_times_" + str(voltage) + "V",
                                 7000, 0, 7000)
         apulse_amplitude = ROOT.TH1D(date + "_" + pmt_array.get_pmt_object_number(i_om).get_pmt_id() + "_apulse_amplitudes_" + str(voltage) + "V",
                                      date + "_" + pmt_array.get_pmt_object_number(i_om).get_pmt_id() + "_apulse_amplitudes_" + str(voltage) + "V",
                                      nbins, 0, 500)
+        he_apulse_amplitude = ROOT.TH1D(date + "_" + pmt_array.get_pmt_object_number(i_om).get_pmt_id() + "_he_apulse_amplitudes_" + str(voltage) + "V",
+                                        date + "_" + pmt_array.get_pmt_object_number(i_om).get_pmt_id() + "_he_apulse_amplitudes_" + str(voltage) + "V",
+                                        nbins, 0, 500)
         charge_hists.append(charge_hist)
         amp_hists.append(amp_hist)
         baselines.append(baseline)
         apulse_nums_hists.append(apulse_num)
+        he_apulse_nums_hists.append(he_apulse_num)
         apulse_times_hists.append(apulse_time)
         apulse_amplitudes_hists.append(apulse_amplitude)
+        he_apulse_amplitudes_hists.append(he_apulse_amplitude)
 
     for event in tree:
 
@@ -92,19 +102,29 @@ def read_tree(root_file_name: str, pmt_array: PMT_Array, output_file_location: s
 
         # Now apply new amplitude and shape cuts
         new_apulse_num = 0
+        he_new_apulse_num = 0
         filer_list = []
+        he_filter_list = []
         try:
             for i_apulse in range(apulse_num):
                 if apulse_shapes[i_apulse] > pmt_array.get_pmt_object_number(OM_ID).get_setting("mf_shape_threshold")\
                         and apulse_amplitudes[i_apulse] > pmt_array.get_pmt_object_number(OM_ID).get_setting("mf_amp_threshold")\
                         and apulse_times[i_apulse] > pmt_array.get_pmt_object_number(OM_ID).get_setting("sweep_range")[0]:
+                    if pmt_array.get_pmt_object_number(OM_ID).get_setting("he_region")[0] <= apulse_times[i_apulse] <= pmt_array.get_pmt_object_number(OM_ID).get_setting("he_region")[1]:
+                        he_filter_list.append(True)
+                        he_new_apulse_num += 1
+                        he_apulse_amplitudes_hists[OM_ID].Fill(apulse_amplitudes[i_apulse])
+                    else:
+                        he_filter_list.append(False)
                     filer_list.append(True)
                     new_apulse_num += 1
                     apulse_amplitudes_hists[OM_ID].Fill(apulse_amplitudes[i_apulse])
                     apulse_times_hists[OM_ID].Fill(apulse_times[i_apulse])
                 else:
                     filer_list.append(False)
+                    he_filter_list.append(False)
             apulse_nums_hists[OM_ID].Fill(new_apulse_num)
+            he_apulse_nums_hists[OM_ID].Fill(he_new_apulse_num)
         except:
             pass
 
@@ -119,6 +139,8 @@ def read_tree(root_file_name: str, pmt_array: PMT_Array, output_file_location: s
             apulse_nums_hists[i_om].Write()
             apulse_times_hists[i_om].Write()
             apulse_amplitudes_hists[i_om].Write()
+            he_apulse_nums_hists[i_om].Write()
+            he_apulse_amplitudes_hists[i_om].Write()
         else:
             pass
 

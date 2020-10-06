@@ -45,3 +45,5 @@ Define the known waveform length
 # trigger_point : 400
 
 # integration : 0.3,0.3
+
+# he_region : 1400,2000

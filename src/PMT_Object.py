@@ -37,6 +37,7 @@ class PMT_Object:
         waveform_length = 8000
         trigger_point = 100
         integration = [0.3, 0.3]
+        he_region = [1400, 2000]
 
         self.setting_dict = {
             "charge_cut"            : charge_cut,
@@ -54,7 +55,8 @@ class PMT_Object:
             "waveform_length"       : waveform_length,
             "baseline"              : baseline,
             "trigger_point"         : trigger_point,
-            "integration"           : integration
+            "integration"           : integration,
+            "he_region"             : he_region
         }
 
         self.template_pmt_pulse = np.array([], dtype='float')
@@ -71,6 +73,8 @@ class PMT_Object:
                                      "pulse_times_hist",
                                      "baseline_hist"
                                      ]
+
+        self.histogram_dict = {}
 
     def set_up_histograms(self):
         pmt_pulse_charge_hist = ROOT.TH1F(self.get_pmt_id() + "_pulse_charge_spectrum",
@@ -168,7 +172,8 @@ class PMT_Object:
     def set_template_bool(self,  new_bool: bool):
         self.template_bool = new_bool
 
-    def get_normalisation_factor(self, vector: list):
+    @staticmethod
+    def get_normalisation_factor(vector: list):
         norm = 0.0
         for i in range(len(vector)):
             norm += vector[i] * vector[i]
@@ -329,7 +334,7 @@ class PMT_Object:
         return self.get_histogram("pulse_charge_hist")
 
     def fill_pmt_pulse_charge_hist(self, value: float):
-        #print(value)
+        # print(value)
         self.get_histogram("pulse_charge_hist").Fill(value)
 
     def get_pmt_pulse_amplitude_hist(self):
@@ -395,7 +400,7 @@ class PMT_Object:
 
     def fill_pmt_hists(self, results: dict):
 
-        #print(results)
+        # print(results)
         pulse_charge: float = results["pulse_charge"]
         pulse_amplitude: float = results["pulse_amplitude"]
         apulse_charge: float = results["apulse_charge"]
@@ -431,9 +436,12 @@ class PMT_Object:
         for hist in self.get_histogram_dict().keys():
             self.get_histogram_dict()[hist].Write()
 
-    def save_histogram(self, root_file: ROOT.TFile, hist, write_function: str):
+    @staticmethod
+    def save_histogram(root_file: ROOT.TFile, hist, write_function: str):
         if write_function in ['RECREATE', "CREATE", "UPDATE"]:
-            pass
+            file = ROOT.TFile(root_file, write_function)
+            file.cd()
+            hist.Write()
         else:
             print("Invalid write function.")
 

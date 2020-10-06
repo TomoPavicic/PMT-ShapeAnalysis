@@ -74,7 +74,8 @@ class PMT_Array:
         for i_pmt in range(self.get_pmt_total_number()):
             self.get_pmt_object_number(i_pmt).set_sweep_bool(new_bool)
 
-    def read_config_file(self, config_file_name: str):
+    @staticmethod
+    def read_config_file(config_file_name: str):
         try:
             config_file = open(config_file_name, 'r')
         except FileNotFoundError as fnf_error:

@@ -869,6 +869,66 @@ def process_date(date_array: np.array):
             temp_date = 298
         if date == 200831:
             temp_date = 299
+        if date == 200901:
+            temp_date = 300
+        if date == 200902:
+            temp_date = 301
+        if date == 200903:
+            temp_date = 302
+        if date == 200904:
+            temp_date = 303
+        if date == 200905:
+            temp_date = 304
+        if date == 200906:
+            temp_date = 305
+        if date == 200907:
+            temp_date = 306
+        if date == 200908:
+            temp_date = 307
+        if date == 200909:
+            temp_date = 308
+        if date == 200910:
+            temp_date = 309
+        if date == 200911:
+            temp_date = 310
+        if date == 200912:
+            temp_date = 311
+        if date == 200913:
+            temp_date = 312
+        if date == 200914:
+            temp_date = 313
+        if date == 200915:
+            temp_date = 314
+        if date == 200916:
+            temp_date = 315
+        if date == 200917:
+            temp_date = 316
+        if date == 200918:
+            temp_date = 317
+        if date == 200919:
+            temp_date = 318
+        if date == 200920:
+            temp_date = 319
+        if date == 200921:
+            temp_date = 320
+        if date == 200922:
+            temp_date = 321
+        if date == 200923:
+            temp_date = 322
+        if date == 200924:
+            temp_date = 323
+        if date == 200925:
+            temp_date = 324
+        if date == 200926:
+            temp_date = 325
+        if date == 200927:
+            temp_date = 326
+        if date == 200928:
+            temp_date = 327
+        if date == 200929:
+            temp_date = 328
+        if date == 200930:
+            temp_date = 329
 
         output_list.append(temp_date)
 
@@ -1541,6 +1601,66 @@ def process_exposure(date_array: np.array):
             temp_date = 201/10 + 97/100
         if date == 200831:
             temp_date = 202/10 + 97/100
+        if date == 200901:
+            temp_date = 203/10 + 97/100
+        if date == 200902:
+            temp_date = 204/10 + 97/100
+        if date == 200903:
+            temp_date = 205/10 + 97/100
+        if date == 200904:
+            temp_date = 206/10 + 97/100
+        if date == 200905:
+            temp_date = 207/10 + 97/100
+        if date == 200906:
+            temp_date = 208/10 + 97/100
+        if date == 200907:
+            temp_date = 209/10 + 97/100
+        if date == 200908:
+            temp_date = 210/10 + 97/100
+        if date == 200909:
+            temp_date = 211/10 + 97/100
+        if date == 200910:
+            temp_date = 212/10 + 97/100
+        if date == 200911:
+            temp_date = 213/10 + 97/100
+        if date == 200912:
+            temp_date = 214/10 + 97/100
+        if date == 200913:
+            temp_date = 215/10 + 97/100
+        if date == 200914:
+            temp_date = 216/10 + 97/100
+        if date == 200915:
+            temp_date = 217/10 + 97/100
+        if date == 200916:
+            temp_date = 218/10 + 97/100
+        if date == 200917:
+            temp_date = 219/10 + 97/100
+        if date == 200918:
+            temp_date = 220/10 + 97/100
+        if date == 200919:
+            temp_date = 221/10 + 97/100
+        if date == 200920:
+            temp_date = 222/10 + 97/100
+        if date == 200921:
+            temp_date = 223/10 + 97/100
+        if date == 200922:
+            temp_date = 224/10 + 97/100
+        if date == 200923:
+            temp_date = 225/10 + 97/100
+        if date == 200924:
+            temp_date = 226/10 + 97/100
+        if date == 200925:
+            temp_date = 227/10 + 97/100
+        if date == 200926:
+            temp_date = 228/10 + 97/100
+        if date == 200927:
+            temp_date = 229/10 + 97/100
+        if date == 200928:
+            temp_date = 230/10 + 97/100
+        if date == 200929:
+            temp_date = 231/10 + 97/100
+        if date == 200930:
+            temp_date = 232/10 + 97/100
 
         output_list.append(temp_date)
 

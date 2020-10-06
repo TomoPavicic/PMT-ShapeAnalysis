@@ -32,7 +32,7 @@ def main():
     success_rate = [0, 0]
     num_average = 7
     re_bin = 10
-    number_total_weeks = 40
+    number_total_weeks = 52
     last_temp = [[],[]]
     x_og = []
     num_in_week = [[0 for i in range(number_total_weeks+1)],[0 for i in range(number_total_weeks+1)]]
@@ -115,11 +115,11 @@ def main():
                 plt.plot(0, 0, 'g-', label="Atmosphere He")
                 plt.plot(0, 0, 'b-', label="1% He")
                 plt.plot(0, 0, 'r-', label="10% He")
-                plt.axvline(1580, ls='--', color='r')
-                plt.axvline(2680, ls='--', color='g')
-                plt.axvline(1290, ls='--', color='k')
-                plt.axvline(2560, ls='--', color='b')
-                plt.axvline(3850, ls='--', color='c')
+                plt.axvline(1580, ls='--', color='r', label=r"$He^+$")
+                plt.axvline(2680, ls='--', color='g', label=r"$H_2O^+$")
+                plt.axvline(1290, ls='--', color='k', label=r"$H_2^+ He^{2+}$")
+                plt.axvline(2560, ls='--', color='b', label=r"$CH_4^+$")
+                plt.axvline(3850, ls='--', color='c', label=r"$CO_2^+$")
                 plt.legend(loc="upper right")
                 plt.ylim(0, 6)
                 plt.xlim(800, 7000)
@@ -129,7 +129,7 @@ def main():
                 plt.grid()
                 #plt.yscale('log')
                 plt.show(block=False)
-                plt.pause(0.05)
+                plt.pause(0.01)
                 plt.close()
 
             last_temp[i_channel][week_num] += 100 * np.array(temp)/hist.GetEntries()
@@ -171,13 +171,18 @@ def main():
         plt.plot(0, 0, 'g-', label="Atmosphere He")
         plt.plot(0, 0, 'b-', label="1% He")
         plt.plot(0, 0, 'r-', label="10% He")
+        plt.axvline(1580, ls='--', color='r', label=r"$He^+$")
+        plt.axvline(2680, ls='--', color='g', label=r"$H_2O^+$")
+        plt.axvline(1290, ls='--', color='k', label=r"$H_2^+ He^{2+}$")
+        plt.axvline(2560, ls='--', color='b', label=r"$CH_4^+$")
+        plt.axvline(3850, ls='--', color='c', label=r"$CO_2^+$")
         plt.xlim(800, 7000)
         plt.xlabel("afterpulse time in waveform /ns")
         plt.ylabel("normalised counts /%")
         plt.legend(loc="upper right")
         plt.grid()
         plt.show(block=False)
-        plt.pause(0.5)
+        plt.pause(0.1)
         plt.close()
     #plt.rcParams["figure.figsize"] = (20, 20)'''
     '''for i_bin in range(1,len(apulse_num_y[0])):
