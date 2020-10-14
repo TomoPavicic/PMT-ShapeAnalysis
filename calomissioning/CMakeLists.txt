@@ -16,6 +16,18 @@ add_executable(read_rtd read_rtd.cxx)
 
 target_link_libraries(read_rtd SNFrontEndElectronics::snfee)
 
+target_link_libraries(read_rtd PRIVATE Boost::program_options)
+
+target_link_libraries(read_rtd PRIVATE ROOT::Core)
+
+target_link_libraries(read_rtd PRIVATE ROOT::Tree)
+
+target_link_libraries(read_rtd PRIVATE ROOT::MathCore)
+
+target_link_libraries(read_rtd PRIVATE ROOT::Hist)
+
+target_link_libraries(read_rtd PRIVATE ROOT::Gpad)
+
 set_target_properties(read_rtd
   PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
