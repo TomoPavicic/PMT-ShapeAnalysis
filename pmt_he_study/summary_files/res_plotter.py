@@ -18,14 +18,30 @@ from scipy.optimize import curve_fit
 from functions.other_functions import pmt_parse_arguments, fit, chi2, process_date, linear, gaus
 from src.PMT_Array import PMT_Array
 
+# bismuth_func_string_0 = "[0]*(7.08*TMath::Gaus(x,[1],[2]) + 1.84*TMath::Gaus(x,[1]*(1 + 72.144/975.651),[2]*1.036) + 0.44*TMath::Gaus(x,[1]*(1 + 84.154/975.651),[2]*1.042)) + 0.464*(exp(0.254*x)/(1 + exp((x - 28.43)/2.14)))"
+# bismuth_func_string_1 = "[0]*(7.08*TMath::Gaus(x,[1],[2]) + 1.84*TMath::Gaus(x,[1]*(1 + 72.144/975.651),[2]*1.036) + 0.44*TMath::Gaus(x,[1]*(1 + 84.154/975.651),[2]*1.042)) + 0.515*(exp(0.2199*x)/(1 + exp((x - 31.68)/2.48)))"
 
-def write_to_file(fit_parameters):
-    pass
+bismuth_func_string_0 = "[0]*(7.08*TMath::Gaus(x,[1],[2]) + 1.84*TMath::Gaus(x,[1]*(1 + 72.144/975.651),[2]*1.036) + 0.44*TMath::Gaus(x,[1]*(1 + 84.154/975.651),[2]*1.042)) + [3]*(exp([4]*x)/(1 + exp((x - [5])/2.14)))"
+bismuth_func_string_1 = "[0]*(7.08*TMath::Gaus(x,[1],[2]) + 1.84*TMath::Gaus(x,[1]*(1 + 72.144/975.651),[2]*1.036) + 0.44*TMath::Gaus(x,[1]*(1 + 84.154/975.651),[2]*1.042)) + [3]*(exp([4]*x)/(1 + exp((x - [5])/2.48)))"
+bismuth_string = [bismuth_func_string_0, bismuth_func_string_1]
+
+
+def create_file(file_name: str):
+    file = open(file_name, 'w')
+    file.close()
+
+
+def write_to_file(file_name: str, line):
+    file = open(file_name, 'a')
+
+    file.write(line + '\n')
+
+    file.close()
 
 
 def get_error_a_divide_b(da, a, db, b):
-    c = a/b
-    dc = c * np.sqrt((da/a)**2 + (db/b)**2)
+    c = a / b
+    dc = c * np.sqrt((da / a) ** 2 + (db / b) ** 2)
     return dc
 
 
@@ -35,13 +51,12 @@ def get_resolution(mu: float, mu_err: float, sig: float, sig_err: float):
     if mu == 0:
         pass
     else:
-        res = sig/mu
+        res = sig / mu
         res_err = get_error_a_divide_b(sig_err, sig, mu_err, mu)
-    return res*100, res_err*100
+    return res * 100, res_err * 100
 
 
 def read_file(date: str, voltage: int, root_file_name: str, pmt_array: PMT_Array, output_file_location: str):
-
     file = ROOT.TFile(root_file_name, "READ")
     file.cd()
 
@@ -63,7 +78,7 @@ def read_file(date: str, voltage: int, root_file_name: str, pmt_array: PMT_Array
             continue
 
         mu_guess = charge_hist.GetMaximumBin() * charge_hist.GetBinWidth(0)
-        lower_range = mu_guess - 2
+        lower_range = mu_guess - 9
         higher_range = mu_guess + 6
 
         bi_fit = ROOT.TF1("fit", "[0]*(7.08*TMath::Gaus(x,[1],[2])"
@@ -71,20 +86,23 @@ def read_file(date: str, voltage: int, root_file_name: str, pmt_array: PMT_Array
                                  " + 0.44*TMath::Gaus(x,[1]*(1 + 84.154/975.651),[2]*1.042))"
                                  " + [3]*(exp([4]*x)/(1 + exp((x - [5])/[6])))",
                           lower_range, higher_range)
+        bi_fit = ROOT.TF1("fit", bismuth_string[i_om], lower_range, higher_range)
         bi_fit.SetParNames("A", "mu", "sig", "B", "e", "c_e", "s")
+        # bi_fit.SetParNames("A", "mu", "sig", "B", "ce_exp", "ce")
 
-        bi_fit.SetParLimits(0, 0, 500)
+        bi_fit.SetParLimits(0, 0, 600)
         bi_fit.SetParLimits(1, mu_guess - 1, mu_guess + 1)
-        bi_fit.SetParLimits(2, 0.8, 1.2)
-        bi_fit.SetParLimits(3, 0, 500)
-        bi_fit.SetParLimits(4, 0.1, 10)
+        bi_fit.SetParLimits(2, 1, 1.2)
+        bi_fit.SetParLimits(3, 100, 500)
+        bi_fit.SetParLimits(4, 0.001, 0.1)
         bi_fit.SetParLimits(5, mu_guess - 6, mu_guess)
         bi_fit.SetParLimits(6, 1, 3)
         bi_fit.SetParameters(100, mu_guess, 1, 400, 0.5, mu_guess - 2, 2)
 
-        name = output_file_location + "/plots/" + date + "_" + pmt_array.get_pmt_object_number(i_om).get_pmt_id() + "_charge_spectrum_fit.pdf"
+        name = output_file_location + "/plots/" + date + "_" + pmt_array.get_pmt_object_number(
+            i_om).get_pmt_id() + "_charge_spectrum_fit.pdf"
 
-        charge_hist.Fit(bi_fit, "0Q","", lower_range, higher_range)
+        charge_hist.Fit(bi_fit, "0Q", "", lower_range, higher_range)
         charge_hist.SetXTitle("Charge /pC")
         charge_hist.SetYTitle("Counts")
         charge_hist.SetTitle(date + "_" + pmt_array.get_pmt_object_number(i_om).get_pmt_id() + "_charge_spectrum_fit")
@@ -130,6 +148,10 @@ def main():
     # config_file_name = args.c
     output_directory = args.o
     ##############################
+
+    out_files = [output_directory + '/res_vs_time_ch0.txt', output_directory + '/res_vs_time_ch1.txt']
+    create_file(out_files[0])
+    create_file(out_files[1])
 
     filenames_txt = input_directory + "/filenames.txt"
 
@@ -177,7 +199,6 @@ def main():
             continue
 
         fit_parameters = read_file(date, voltage, input_directory + "/" + file, pmt_array, output_directory)
-        write_to_file(fit_parameters)
 
         for i_om in range(pmt_array.get_pmt_total_number()):
 
@@ -205,6 +226,8 @@ def main():
             baseline_sigs[i_om].append(baseline_sig)
             fit_chi2[i_om].append(chi_2)
 
+            write_to_file(out_files[i_om], '{},{},{},{},{}'.format(date, res, res_err, chi_2, gain))
+
     # Plot individual summaries
     for i_om in range(pmt_array.get_pmt_total_number()):
 
@@ -220,13 +243,13 @@ def main():
             start = np.where(date == 1)[0][0]
         mid = np.where(date == 98)[0][0]
 
-       # print("start:",start)
+        # print("start:",start)
 
-        plt.plot(date[:start + 1], np.array(gains[i_om][:start + 1])*2,
+        plt.plot(date[:start + 1], np.array(gains[i_om][:start + 1]) * 2,
                  "g.", label="Atmospheric He")
-        plt.plot(date[start+1:mid + 1], np.array(gains[i_om][start+1:mid + 1])*2,
+        plt.plot(date[start + 1:mid + 1], np.array(gains[i_om][start + 1:mid + 1]) * 2,
                  "b.", label="1% He")
-        plt.plot(date[mid+1:], np.array(gains[i_om][mid+1:])*2,
+        plt.plot(date[mid + 1:], np.array(gains[i_om][mid + 1:]) * 2,
                  "r.", label="10% He")
         plt.axvline(date[start], 0, 100, ls='--', color='k')
         plt.axvline(date[mid], 0, 100, ls='--', color='k')
@@ -234,7 +257,7 @@ def main():
         plt.ylabel("PMT gain at 1Mev /mV")
         plt.title(pmt_array.get_pmt_object_number(i_om).get_pmt_id() + " Gain at 1MeV vs exposure time")
         plt.grid()
-        plt.ylim(150,300)
+        plt.ylim(150, 300)
         plt.legend(loc='lower right')
         plt.savefig(output_directory + "/summary_plots/" +
                     pmt_array.get_pmt_object_number(i_om).get_pmt_id() + "_gains_vs_time")
@@ -265,21 +288,29 @@ def main():
             else:
                 res_filter.append(False)
 
-        popt, pcov = curve_fit(linear, np.array(date[start:])[res_filter[start:]], np.array(resolutions[i_om][start:])[res_filter[start:]],
-                               sigma=np.array(resolutions_err[i_om][start:])[res_filter[start:]], p0=[0.001, 2], bounds=[[0, 0], [0.002, 3.5]], maxfev=500000)
+        popt, pcov = curve_fit(linear, np.array(date[start:])[res_filter[start:]],
+                               np.array(resolutions[i_om][start:])[res_filter[start:]],
+                               sigma=np.array(resolutions_err[i_om][start:])[res_filter[start:]], p0=[0.001, 2],
+                               bounds=[[0, 0], [0.002, 3.5]], maxfev=500000)
         x_array = np.linspace(date[start], np.amax(date), 2)
-        chi_2 = chi2(np.array(resolutions[i_om][start:])[res_filter[start:]], np.array(resolutions_err[i_om][start:])[res_filter[start:]], linear(date[start:][res_filter[start:]], *popt), len(popt))
+        chi_2 = chi2(np.array(resolutions[i_om][start:])[res_filter[start:]],
+                     np.array(resolutions_err[i_om][start:])[res_filter[start:]],
+                     linear(date[start:][res_filter[start:]], *popt), len(popt))
 
         plt.errorbar(date[:start + 1], resolutions[i_om][:start + 1], yerr=resolutions_err[i_om][:start + 1],
                      fmt="g.", label="Atmospheric He")
-        plt.plot(np.array(date[start:])[res_filter[start:]], np.array(resolutions[i_om][start:])[res_filter[start:]], 'ko',
+        plt.plot(np.array(date[start:])[res_filter[start:]], np.array(resolutions[i_om][start:])[res_filter[start:]],
+                 'ko',
                  label="used values")
-        plt.errorbar(date[start+1:mid + 1], resolutions[i_om][start+1:mid + 1], yerr=resolutions_err[i_om][start+1:mid + 1],
+        plt.errorbar(date[start + 1:mid + 1], resolutions[i_om][start + 1:mid + 1],
+                     yerr=resolutions_err[i_om][start + 1:mid + 1],
                      fmt="b.", label="1% He")
-        plt.errorbar(date[mid+1:], resolutions[i_om][mid+1:], yerr=resolutions_err[i_om][mid+1:],
+        plt.errorbar(date[mid + 1:], resolutions[i_om][mid + 1:], yerr=resolutions_err[i_om][mid + 1:],
                      fmt="r.", label="10% He")
         plt.plot(x_array, linear(x_array, *popt), 'k-')
-        plt.xlabel("exposure days relative to 190611 \n $y = (${:.1e}$ ± ${:.0e})$x + (${:.1e}$ ± ${:.0e}$)$ $\chi^2_R = {:.2}$".format(popt[0], np.sqrt(pcov[0, 0]),popt[1], np.sqrt(pcov[1, 1]), chi_2))
+        plt.xlabel(
+            "exposure days relative to 190611 \n $y = (${:.1e}$ ± ${:.0e})$x + (${:.1e}$ ± ${:.0e}$)$ $\chi^2_R = {:.2}$".format(
+                popt[0], np.sqrt(pcov[0, 0]), popt[1], np.sqrt(pcov[1, 1]), chi_2))
         plt.ylabel("Resolution at 1MeV /% $\sigma / \mu$")
         plt.title(pmt_array.get_pmt_object_number(i_om).get_pmt_id() + " Resolution vs exposure time")
         plt.axvline(date[start], 0, 100, ls='--', color='k')
@@ -323,8 +354,9 @@ def main():
                 x_date.append(dates[0][i])
                 ratio.append(resolutions[0][i] / resolutions[1][j])
                 ratio_err.append(resolutions[0][i] / resolutions[1][j] * np.sqrt(
-                    (resolutions_err[0][i] / resolutions[0][i]) ** 2 + (resolutions_err[1][j] / resolutions[1][j]) ** 2))
-                gain_ratio.append(gains[0][i]/gains[1][j])
+                    (resolutions_err[0][i] / resolutions[0][i]) ** 2 + (
+                                resolutions_err[1][j] / resolutions[1][j]) ** 2))
+                gain_ratio.append(gains[0][i] / gains[1][j])
                 break
 
     popt, pcov = curve_fit(linear, x_date, ratio,
@@ -335,7 +367,13 @@ def main():
 
     plt.errorbar(x_date, ratio, yerr=ratio_err, fmt="k.")
     plt.plot(x_array, linear(x_array, *popt), "g-",
-             label="$y = (${:.1e}$ ± ${:.0e})$\\times x + (${:.1e}$ ± ${:.0e}$) \chi^2_R = {:.2}$".format(popt[0], np.sqrt(pcov[0, 0]),popt[1], np.sqrt(pcov[1, 1]), chi_2))
+             label="$y = (${:.1e}$ ± ${:.0e})$\\times x + (${:.1e}$ ± ${:.0e}$) \chi^2_R = {:.2}$".format(popt[0],
+                                                                                                          np.sqrt(pcov[
+                                                                                                                      0, 0]),
+                                                                                                          popt[1],
+                                                                                                          np.sqrt(pcov[
+                                                                                                                      1, 1]),
+                                                                                                          chi_2))
     plt.axvline(98, color="r", ls="--")
     plt.axvline(0, color="b", ls="--")
     plt.xlabel("exposure days relative to 190611")
