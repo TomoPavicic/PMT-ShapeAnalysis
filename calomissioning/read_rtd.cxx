@@ -109,6 +109,8 @@ int main(int argc, char **argv)
     Double_t peak_time;
     Int_t calo_hit_num;
     Int_t calo_tdc;
+    Int_t run_num;
+    Int_t wall_num;
     std::vector<uint16_t> waveform;
 
     // Create a ROOT Tree
@@ -125,6 +127,8 @@ int main(int argc, char **argv)
     tree.Branch("peak_time",&peak_time);
     tree.Branch("calo_hit_num",&calo_hit_num);
     tree.Branch("calo_tdc",&calo_tdc);
+    tree.Branch("run_num",&run_num);
+    tree.Branch("wall_num",&wall_num);
     //tree.Branch("waveform",&waveform);
 
     // Configuration for raw data reader
@@ -282,6 +286,8 @@ int main(int argc, char **argv)
 		peak_time = peak_actual;
 		calo_hit_num = hit_num;
 		calo_tdc = tdc;
+		run_num = run_id;
+		wall_num = crate_num;
 		
 		/*
 		std::vector<uint16_t> temp_vector;

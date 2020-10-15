@@ -8,13 +8,13 @@ import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
 from scipy.optimize import curve_fit
 from functions.other_functions import sncd_parse_arguments, gaussian, chi2, inner_product
-from scr.PMT_Array import PMT_Array
-from scr.PMT_Waveform import PMT_Waveform
+from src.PMT_Array import PMT_Array
+from src.PMT_Waveform import PMT_Waveform
 
 
 def get_rise_time(waveform, ratio):
     # waveform need baseline of zero
-    peak = np.argmin(waveform)
+    peak = int(np.argmin(waveform))
     point = 0
     for i in range(peak, waveform.size):
         if waveform[i] > np.amin(waveform)*ratio:
@@ -160,12 +160,12 @@ def main():
             break
         event_counter[OM_ID] += 1
 
-        #del pmt_waveform
+        # del pmt_waveform
 
     amp_bins = [i*max_amp/num_bins for i in range(num_bins)]
     amp_cuts = []
 
-    #output_file.cd()
+    # output_file.cd()
     for i_om in tqdm.tqdm(range(num_pmts)):
         #amp_hists[i_om].SaveAs("/Users/willquinn/Desktop/PDFs/amplitude_index_"+str(i_om)+".pdf")
         #amp_hists[i_om].Write()
@@ -177,7 +177,7 @@ def main():
         plt.grid()
         plt.yscale('log')
         plt.close()
-    #output_file.Close()
+    # output_file.Close()
 
     return
 
