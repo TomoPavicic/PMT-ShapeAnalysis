@@ -16,17 +16,17 @@ add_executable(read_rtd read_rtd.cxx)
 
 target_link_libraries(read_rtd SNFrontEndElectronics::snfee)
 
-target_link_libraries(read_rtd PRIVATE Boost::program_options)
+target_link_libraries(read_rtd Boost::program_options)
 
-target_link_libraries(read_rtd PRIVATE ROOT::Core)
+target_link_libraries(read_rtd ROOT::Core)
 
-target_link_libraries(read_rtd PRIVATE ROOT::Tree)
+target_link_libraries(read_rtd ROOT::Tree)
 
-target_link_libraries(read_rtd PRIVATE ROOT::MathCore)
+target_link_libraries(read_rtd ROOT::MathCore)
 
-target_link_libraries(read_rtd PRIVATE ROOT::Hist)
+target_link_libraries(read_rtd ROOT::Hist)
 
-target_link_libraries(read_rtd PRIVATE ROOT::Gpad)
+target_link_libraries(read_rtd ROOT::Gpad)
 
 set_target_properties(read_rtd
   PROPERTIES
