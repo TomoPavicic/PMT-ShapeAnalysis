@@ -35,7 +35,7 @@ set_target_properties(read_rtd
   )
 
 install(FILES
-    ${CMAKE_BINARY_DIR}/snfee-tutorial_lv0
+    ${CMAKE_BINARY_DIR}/read_rtd
     DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}
     PERMISSIONS
     OWNER_READ OWNER_WRITE OWNER_EXECUTE
