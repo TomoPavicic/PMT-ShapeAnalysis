@@ -135,13 +135,24 @@ def main():
 
     # Run over file to create containers
     for event in tqdm.tqdm(tree):
+        event_num = event.event_num
+        row = event.row
+        col = event.column
         OM_ID = event.OM_ID
         charge = -1*event.charge
+        baseline = event.baseline
         amplitude = -1*event.amplitude/8
-        fall_time = event.fall_time/256
-        rise_time = event.rise_time/256
+        fall_time = event.fall_time
+        rise_time = event.rise_time
+        peak_time = event.peak_time
+        calo_hit_num = event.calo_hit_num
+        calo_tdc = event.calo_tdc
+        run_num = event.run_num
+        wall_num = event.wall_num
 
-        raw_amplitudes[OM_ID].append(amplitude)
+        print("calo_hit_num:", calo_hit_num, "event_num:", event_num)
+
+        # raw_amplitudes[OM_ID].append(amplitude)
 
         '''pmt_waveform = PMT_Waveform(event.waveform, pmt_array.get_pmt_object_number(OM_ID))
         peak = pmt_waveform.get_pmt_pulse_peak_position()
@@ -162,7 +173,7 @@ def main():
 
         # del pmt_waveform
 
-    amp_bins = [i*max_amp/num_bins for i in range(num_bins)]
+    '''amp_bins = [i*max_amp/num_bins for i in range(num_bins)]
     amp_cuts = []
 
     # output_file.cd()
@@ -177,7 +188,7 @@ def main():
         plt.grid()
         plt.yscale('log')
         plt.close()
-    # output_file.Close()
+    # output_file.Close()'''
 
     return
 
