@@ -126,7 +126,7 @@ int main(int argc, char **argv)
         tree.Branch("calo_tdc",&calo_tdc);
         tree.Branch("run_num",&run_num);
         tree.Branch("wall_num",&wall_num);
-        tree.Branch("trig_id",&trig_id)
+        tree.Branch("trig_id",&trig_id);
         //tree.Branch("waveform",&waveform);
 
         // Configuration for raw data reader
