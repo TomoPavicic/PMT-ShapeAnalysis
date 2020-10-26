@@ -299,7 +299,7 @@ int main(int argc, char **argv)
 
 		                    // Select a small charge range to add to template pulses
 		                    std::cout << "OM_ID: " << OM_ID << " charge: " << charge << std::endl;
-                            if ( -30 < charge < -20 )
+                            if ( -25000 < charge < -20000 )
                             {
                                 std::vector<Double_t> temp_vector;
                                 uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
