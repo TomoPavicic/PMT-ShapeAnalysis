@@ -411,7 +411,7 @@ void update_temp_vector( std::vector<std::vector<Double_t>> &template_vectors, s
     Double_t my_baseline = get_baseline( new_vector );
 
     Int_t j = 0;
-    for (Int_t i = peak_cell - lower_edge; i < peak_cell + higher_edge; ++i)
+    for (Int_t i = peak_cell - lower_edge; i <= peak_cell + higher_edge; ++i)
     {
         template_vectors[OM_ID][j] += new_vector[i] - my_baseline;
         j++;
@@ -452,8 +452,8 @@ void write_templates( std::vector<std::vector<Double_t>> &template_vectors )
     for (Int_t i_temp = 0; i_temp < (Int_t)template_vectors.size(); ++i_temp)
     {
         std::string name = "Template_Ch" + std::to_string(i_temp);
-        //std::cout << std::endl;
-        //std::cout << name << std::endl;
+        std::cout << std::endl;
+        std::cout << name << std::endl;
         TH1D* hist = new TH1D(name.c_str(), name.c_str(), template_vectors[i_temp].size(), 0, template_vectors[i_temp].size());
 
         Double_t norm = sqrt( get_inner_product( template_vectors[i_temp], template_vectors[i_temp] ) );
@@ -466,7 +466,7 @@ void write_templates( std::vector<std::vector<Double_t>> &template_vectors )
         for (int j_bin = 1; j_bin <= (Int_t)template_vectors[i_temp].size() + 1; ++j_bin)
         {
             hist->SetBinContent(j_bin, template_vectors[i_temp][j_bin]/norm);
-            //std::cout << j_bin << " " << template_vectors[i_temp][j_bin]/norm << std::endl;
+            std::cout << j_bin << " " << template_vectors[i_temp][j_bin]/norm << std::endl;
         }
         hist->Write();
         delete hist;
