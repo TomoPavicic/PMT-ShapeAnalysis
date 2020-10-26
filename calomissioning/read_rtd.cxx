@@ -8,6 +8,7 @@
 #include "TTree.h"
 #include "TH1F.h"
 #include "TH2F.h"
+#include "TH1D.h"
 #include "TCanvas.h"
 #include "TStyle.h"
 
@@ -423,7 +424,7 @@ void write_templates( std::vector<std::vector<Double_t>> &template_vectors )
     TFile* template_root_file = new TFile("templates.root", "RECREATE");
     template_root_file->cd();
 
-    for (Int_t i_temp = 0; i_temp < ; ++i_temp)
+    for (Int_t i_temp = 0; i_temp < (Int_t)template_vectors.size(); ++i_temp)
     {
         std::string name = "Template_Ch" + std::to_string(i_temp);
         TH1D* hist = new TH1D(name, name, template_vectors[i_temp].size(), 0, template_vectors[i_temp].size());
@@ -434,7 +435,7 @@ void write_templates( std::vector<std::vector<Double_t>> &template_vectors )
             return;
         }
 
-        for (int j_bin = 0; j_bin < template_vectors[i_temp].size(); ++j_bin)
+        for (int j_bin = 0; j_bin < (Int_t)template_vectors[i_temp].size(); ++j_bin)
         {
             hist->SetBinContent(j_bin, template_vectors[i_temp][j_bin]/norm);
         }
