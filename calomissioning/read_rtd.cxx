@@ -93,7 +93,8 @@ int main(int argc, char **argv)
 
         std::clog<<"Input file name : "<<input_file_name<<std::endl;
 
-        std::vector<std::vector<Double_t>> template_vectors(260, std::vector<Double_t> temp(80, 0.0));
+        std::vector<Double_t> temp(80, 0.0);
+        std::vector<std::vector<Double_t>> template_vectors(260, temp);
         /*std::vector<Double_t> temp(80, 0.0);
         for (int i_temp = 0; i_temp < 260; ++i_temp)
         {
@@ -433,6 +434,8 @@ void write_templates( std::vector<std::vector<Double_t>> &template_vectors )
     for (Int_t i_temp = 0; i_temp < (Int_t)template_vectors.size(); ++i_temp)
     {
         std::string name = "Template_Ch" + std::to_string(i_temp);
+        std::cout << std::endl;
+        std::cout << name << std::endl;
         TH1D* hist = new TH1D(name.c_str(), name.c_str(), template_vectors[i_temp].size(), 0, template_vectors[i_temp].size());
 
         Double_t norm = sqrt( get_inner_product( template_vectors[i_temp], template_vectors[i_temp] ) );
@@ -444,6 +447,7 @@ void write_templates( std::vector<std::vector<Double_t>> &template_vectors )
         for (int j_bin = 0; j_bin < (Int_t)template_vectors[i_temp].size(); ++j_bin)
         {
             hist->SetBinContent(j_bin, template_vectors[i_temp][j_bin]/norm);
+            std::cout << j_bin << " " << template_vectors[i_temp][j_bin]/norm << std::endl;
         }
         hist->Write();
         delete hist;
