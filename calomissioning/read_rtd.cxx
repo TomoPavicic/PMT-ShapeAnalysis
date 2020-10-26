@@ -530,5 +530,5 @@ Int_t get_max_value( std::vector<Double_t> &vec )
             pos = i;
         }
     }
-    return i;
+    return pos;
 }
