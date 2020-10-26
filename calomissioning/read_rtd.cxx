@@ -94,9 +94,10 @@ int main(int argc, char **argv)
         std::clog<<"Input file name : "<<input_file_name<<std::endl;
 
         std::vector<std::vector<Double_t>> template_vectors;
+        std::vector<Double_t> temp(80, 0.0);
         for (int i_temp = 0; i_temp < 260; ++i_temp)
         {
-            std::vector<Double_t> temp(80, 0.0);
+            template_vectors.push_back(temp);
         }
 
         sncabling::service snCabling;
