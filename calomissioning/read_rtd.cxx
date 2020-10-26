@@ -298,6 +298,7 @@ int main(int argc, char **argv)
 		                    */
 
 		                    // Select a small charge range to add to template pulses
+		                    std::cout << "OM_ID: " << OM_ID << " charge: " << charge << std::endl;
                             if ( -30 < charge < -20 )
                             {
                                 std::vector<Double_t> temp_vector;
