@@ -459,7 +459,7 @@ void write_templates( std::vector<std::vector<Double_t>> &template_vectors )
         if ( norm == 0 )
         {
             std::cout << ">>> Normalised template vector : " << i_temp << " is 0" << std::endl;
-            return;
+            continue;
         }
 
         for (int j_bin = 0; j_bin < (Int_t)template_vectors[i_temp].size(); ++j_bin)
