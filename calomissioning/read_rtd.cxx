@@ -346,7 +346,7 @@ std::vector<std::vector<Double_t>> get_template_pulses( std::string template_fil
     for (Int_t itemp = 0; itemp < n_temp; itemp++)
     {
         //std::cout << "Template: " << itemp << std::endl;
-        //std::vector<Double_t> temp_vector; // Define a temporary filling vector
+        std::vector<Double_t> temp_vector; // Define a temporary filling vector
         //Get the template histogram from the file
         std::string hist_name = "Template_Ch" + std::to_string(itemp);
 
