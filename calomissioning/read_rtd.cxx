@@ -298,7 +298,7 @@ int main(int argc, char **argv)
 		                    */
 
 		                    // Select a small charge range to add to template pulses
-		                    std::cout << "OM_ID: " << OM_ID << " charge: " << charge << std::endl;
+		                    //std::cout << "OM_ID: " << OM_ID << " charge: " << charge << std::endl;
                             if ( charge >= -25000 && ch_charge < -20000 )
                             {
                                 std::vector<Double_t> temp_vector;
@@ -307,7 +307,7 @@ int main(int argc, char **argv)
                                 {
                                     uint16_t adc = calo_hit.get_waveforms().get_adc(isample,ichannel);
                                     temp_vector.push_back( (Double_t)adc - baseline);
-                                    std::cout << isample << " : " << adc - baseline << std::endl;
+                                    //std::cout << isample << " : " << adc - baseline << std::endl;
                                 }
                                 update_temp_vector( template_vectors, temp_vector, OM_ID );
                             }
@@ -345,8 +345,8 @@ std::vector<std::vector<Double_t>> get_template_pulses( std::string template_fil
     TFile temp_root_file(template_file.c_str(), "READ");
     for (Int_t itemp = 0; itemp < n_temp; itemp++)
     {
-        std::cout << "Template: " << itemp << std::endl;
-        std::vector<Double_t> temp_vector; // Define a temporary filling vector
+        //std::cout << "Template: " << itemp << std::endl;
+        //std::vector<Double_t> temp_vector; // Define a temporary filling vector
         //Get the template histogram from the file
         std::string hist_name = "Template_Ch" + std::to_string(itemp);
 
@@ -355,7 +355,7 @@ std::vector<std::vector<Double_t>> get_template_pulses( std::string template_fil
         for (Int_t ihist = 1; ihist < template_hist->GetEntries(); ihist++)
         {
             temp_vector.push_back(template_hist->GetBinContent(ihist));
-            std::cout << ihist << " : " << temp_vector[ihist-1] << std::endl;
+            //std::cout << ihist << " : " << temp_vector[ihist-1] << std::endl;
         }
         std::cout << std::endl;
         delete template_hist;
@@ -372,9 +372,9 @@ std::vector<std::vector<Double_t>> get_template_pulses( std::string template_fil
         for (int ivec = 0 ; ivec < (Int_t)temp_vector.size() ;  ivec++)
         {
             temp_vector[ivec] = temp_vector[ivec]/norm;
-            std::cout << ivec << " : " << temp_vector[ivec] << std::endl;
+            //std::cout << ivec << " : " << temp_vector[ivec] << std::endl;
         }
-        std::cout << std::endl;
+        //std::cout << std::endl;
         template_pulses.push_back(temp_vector);
     }
     temp_root_file.Close();
@@ -399,9 +399,9 @@ Double_t get_inner_product( std::vector<Double_t> &vec1, std::vector<Double_t> &
 }
 void update_temp_vector( std::vector<std::vector<Double_t>> &template_vectors, std::vector<Double_t> new_vector, Int_t OM_ID )
 {
-    std::cout << std::endl;
-    std::cout << "<<< update_temp_vector >>> " << std::endl;
-    std::cout << "OM_ID: " << OM_ID << std::endl;
+    //std::cout << std::endl;
+    //std::cout << "<<< update_temp_vector >>> " << std::endl;
+    //std::cout << "OM_ID: " << OM_ID << std::endl;
     Int_t temp_length = 80;
     Int_t peak_cell = get_peak_cell( new_vector );
 
@@ -420,12 +420,12 @@ void update_temp_vector( std::vector<std::vector<Double_t>> &template_vectors, s
         }
     }
 
-    std::cout << std::endl;
-    std::cout << "Template " << OM_ID << std::endl;
-    for (int i = 0; i < (Int_t)template_vectors[OM_ID].size(); ++i)
+    //std::cout << std::endl;
+    //std::cout << "Template " << OM_ID << std::endl;
+    /*for (int i = 0; i < (Int_t)template_vectors[OM_ID].size(); ++i)
     {
         std::cout << "( " << i << " , " << template_vectors[OM_ID][i] << " )" << std::endl;
-    }
+    }*/
 
 }
 Int_t get_peak_cell( std::vector<Double_t> &vec )
@@ -450,8 +450,8 @@ void write_templates( std::vector<std::vector<Double_t>> &template_vectors )
     for (Int_t i_temp = 0; i_temp < (Int_t)template_vectors.size(); ++i_temp)
     {
         std::string name = "Template_Ch" + std::to_string(i_temp);
-        std::cout << std::endl;
-        std::cout << name << std::endl;
+        //std::cout << std::endl;
+        //std::cout << name << std::endl;
         TH1D* hist = new TH1D(name.c_str(), name.c_str(), template_vectors[i_temp].size(), 0, template_vectors[i_temp].size());
 
         Double_t norm = sqrt( get_inner_product( template_vectors[i_temp], template_vectors[i_temp] ) );
@@ -464,7 +464,7 @@ void write_templates( std::vector<std::vector<Double_t>> &template_vectors )
         for (int j_bin = 0; j_bin < (Int_t)template_vectors[i_temp].size(); ++j_bin)
         {
             hist->SetBinContent(j_bin, template_vectors[i_temp][j_bin]/norm);
-            std::cout << j_bin << " " << template_vectors[i_temp][j_bin]/norm << std::endl;
+            //std::cout << j_bin << " " << template_vectors[i_temp][j_bin]/norm << std::endl;
         }
         hist->Write();
         delete hist;
