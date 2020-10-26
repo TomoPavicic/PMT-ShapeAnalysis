@@ -34,6 +34,7 @@ std::vector<std::vector<Double_t>> get_template_pulses( std::string template_fil
 void update_temp_vector( std::vector<std::vector<Double_t>> &template_vectors, std::vector<Double_t> new_vector, Int_t OM_ID );
 Int_t get_peak_cell( std::vector<Double_t> &vec );
 void write_templates( std::vector<std::vector<Double_t>> &template_vectors );
+Double_t get_baseline( std::vector<Double_t> &vec );
 
 bool debug = true;
 
@@ -296,7 +297,6 @@ int main(int argc, char **argv)
 		                        }
 		                    }
 		                    */
-
 		                    // Select a small charge range to add to template pulses
 		                    //std::cout << "OM_ID: " << OM_ID << " charge: " << charge << std::endl;
                             if ( charge >= -25000 && ch_charge < -20000 )
@@ -408,10 +408,12 @@ void update_temp_vector( std::vector<std::vector<Double_t>> &template_vectors, s
     Int_t lower_edge = 30;
     Int_t higher_edge = 50;
 
+    Double_t my_baseline = get_baseline( new_vector );
+
     Int_t j = 0;
     for (Int_t i = peak_cell - lower_edge; i < peak_cell + higher_edge; ++i)
     {
-        template_vectors[OM_ID][j] += new_vector[i];
+        template_vectors[OM_ID][j] += new_vector[i] - my_baseline;
         j++;
 
         if ( j == temp_length )
@@ -469,4 +471,13 @@ void write_templates( std::vector<std::vector<Double_t>> &template_vectors )
         hist->Write();
         delete hist;
     }
+}
+Double_t get_baseline( std::vector<Double_t> &vec )
+{
+    Double_t baseline = 0;
+    for ( Int_t i = 0 ; i < 20 ; i++ )
+    {
+        baseline += vec[i];
+    }
+    return (Double_t)baseline/20.0;
 }
