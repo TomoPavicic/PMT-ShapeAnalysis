@@ -35,6 +35,7 @@ void update_temp_vector( std::vector<std::vector<Double_t>> &template_vectors, s
 Int_t get_peak_cell( std::vector<Double_t> &vec );
 void write_templates( std::vector<std::vector<Double_t>> &template_vectors );
 Double_t get_baseline( std::vector<Double_t> &vec );
+Double_t get_max_value( std::vector<Double_t> &vec );
 
 bool debug = true;
 
@@ -94,8 +95,9 @@ int main(int argc, char **argv)
 
         std::clog<<"Input file name : "<<input_file_name<<std::endl;
 
-        std::vector<Double_t> temp(130, 0.0);
-        std::vector<std::vector<Double_t>> template_vectors(260, temp);
+        //std::vector<Double_t> temp(130, 0.0);
+        //std::vector<std::vector<Double_t>> template_vectors(260, temp);
+        std::vector<std::vector<Double_t>> template_vectors = get_template_pulses( "templates.root", 260 );
         std::cout << "Initialise template vectors" << std::endl;
         for (int j = 0; j < (Int_t)template_vectors.size(); ++j)
         {
@@ -129,6 +131,7 @@ int main(int argc, char **argv)
         Int_t run_num;
         Int_t wall_num;
         Int_t trig_id;
+        Int_t calo_time;
         std::vector<uint16_t> waveform;
 
         // Create a ROOT Tree
@@ -148,6 +151,7 @@ int main(int argc, char **argv)
         tree.Branch("run_num",&run_num);
         tree.Branch("wall_num",&wall_num);
         tree.Branch("trig_id",&trig_id);
+        tree.Branch("calo_time",&calo_time);
         //tree.Branch("waveform",&waveform);
 
         // Configuration for raw data reader
@@ -299,7 +303,7 @@ int main(int argc, char **argv)
 		                    */
 		                    // Select a small charge range to add to template pulses
 		                    //std::cout << "OM_ID: " << OM_ID << " charge: " << charge << std::endl;
-                            if ( charge >= -25000 && ch_charge < -20000 )
+                            /*if ( charge >= -25000 && ch_charge < -20000 )
                             {
                                 std::vector<Double_t> temp_vector;
                                 uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
@@ -310,7 +314,27 @@ int main(int argc, char **argv)
                                     //std::cout << isample << " : " << adc - baseline << std::endl;
                                 }
                                 update_temp_vector( template_vectors, temp_vector, OM_ID );
+                            }*/
+                            std::vector<Double_t> mf_output;
+                            Double_t norm_temp = sqrt( get_inner_product( template_vectors[OM_ID], template_vectors[OM_ID] ) );
+                            for (int i = 0; i < 100; ++i)
+                            {
+                                std::vector<Double_t> temp_vector;
+                                uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
+                                for (uint16_t isample = ch_peak_cell - 30; isample < ch_peak_cell + 100; isample++)
+                                {
+                                    uint16_t adc = calo_hit.get_waveforms().get_adc(isample,ichannel);
+                                    temp_vector.push_back( (Double_t)adc - baseline);
+                                    //std::cout << isample << " : " << adc - baseline << std::endl;
+                                }
+
+                                Double_t norm_test = sqrt( get_inner_product( temp_vector, temp_vector ) );
+                                Double_t mf = get_inner_product( temp_vector, template_vectors[OM_ID] )/( norm_temp * norm_test );
+
+                                mf_output.push_back(mf);
                             }
+
+                            calo_time = get_max_value(mf_output);
 
                             //waveform = temp_vector;
 
@@ -327,7 +351,7 @@ int main(int argc, char **argv)
         output_file->Write();
         output_file->Close();
 
-        write_templates( template_vectors );
+        //write_templates( template_vectors );
 
     } catch (std::exception & error)
     {
@@ -480,4 +504,16 @@ Double_t get_baseline( std::vector<Double_t> &vec )
         baseline += vec[i];
     }
     return (Double_t)baseline/20.0;
+}
+Double_t get_max_value( std::vector<Double_t> &vec )
+{
+    Double_t temp = 0.0;
+    for (int i = 0; i < (Int_t)vec.size(); ++i)
+    {
+        if ( vec[i] > temp )
+        {
+            temp = vec[i];
+        }
+    }
+    return temp;
 }
