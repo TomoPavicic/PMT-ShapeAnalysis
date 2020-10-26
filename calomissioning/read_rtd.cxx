@@ -95,12 +95,16 @@ int main(int argc, char **argv)
 
         std::vector<Double_t> temp(80, 0.0);
         std::vector<std::vector<Double_t>> template_vectors(260, temp);
-        /*std::vector<Double_t> temp(80, 0.0);
-        for (int i_temp = 0; i_temp < 260; ++i_temp)
+        std::cout << "Initialise template vectors" << std::endl;
+        for (int j = 0; j < (Int_t)template_vectors.size(); ++j)
         {
-            template_vectors.push_back(temp);
+            std::cout << std::endl;
+            std::cout << "Template " << j << std::endl;
+            for (int i = 0; i < (Int_t)template_vectors[j].size(); ++i)
+            {
+                std::cout << "( " << i << " , " << template_vectors[j][i] << " )" << std::endl;
+            }
         }
-         */
 
         sncabling::service snCabling;
         snCabling.initialize_simple();
@@ -313,25 +317,24 @@ int main(int argc, char **argv)
 	                }
 	            } //end of channels
             }//end of calohit
-
             event_num ++;
         }   //end of file
     
-        std::clog<<"Events processed : "<<rtd_counter<<" entries"<<std::endl;
+        std::clog<<"Events processed : " << rtd_counter<< " entries" << std::endl;
         output_file->cd();
         output_file->Write();
         output_file->Close();
 
         write_templates( template_vectors );
 
-        } catch (std::exception & error)
-        {
+    } catch (std::exception & error)
+    {
             std::cerr << "[error] " << error.what() << std::endl;
             error_code = EXIT_FAILURE;
-        }
+    }
 
-        sncabling::terminate();
-        return error_code;
+    sncabling::terminate();
+    return error_code;
 }
 
 std::vector<std::vector<Double_t>> get_template_pulses( std::string template_file , Int_t n_temp )
@@ -394,6 +397,9 @@ Double_t get_inner_product( std::vector<Double_t> &vec1, std::vector<Double_t> &
 }
 void update_temp_vector( std::vector<std::vector<Double_t>> &template_vectors, std::vector<Double_t> new_vector, Int_t OM_ID )
 {
+    std::cout << std::endl;
+    std::cout << "<<< update_temp_vector >>> " << std::endl;
+    std::cout << "OM_ID: " << OM_ID << std::endl;
     Int_t temp_length = 80;
     Int_t peak_cell = get_peak_cell( new_vector );
 
@@ -409,6 +415,16 @@ void update_temp_vector( std::vector<std::vector<Double_t>> &template_vectors, s
         if ( j == temp_length )
         {
             break;
+        }
+    }
+
+    for (int j = 0; j < (Int_t)template_vectors.size(); ++j)
+    {
+        std::cout << std::endl;
+        std::cout << "Template " << j << std::endl;
+        for (int i = 0; i < (Int_t)template_vectors[j].size(); ++i)
+        {
+            std::cout << "( " << i << " , " << template_vectors[j][i] << " )" << std::endl;
         }
     }
 }
@@ -441,6 +457,7 @@ void write_templates( std::vector<std::vector<Double_t>> &template_vectors )
         Double_t norm = sqrt( get_inner_product( template_vectors[i_temp], template_vectors[i_temp] ) );
         if ( norm == 0 )
         {
+            std::cout << ">>> Normalised template vector : " << i_temp << " is 0" << std::endl;
             return;
         }
 
