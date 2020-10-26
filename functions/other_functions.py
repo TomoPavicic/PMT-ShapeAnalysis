@@ -1,4 +1,5 @@
 import numpy as np
+from datetime import datetime
 
 
 def parse_arguments():
@@ -1746,3 +1747,16 @@ def chi2(y_obs, y_err, y_exp, n_par):
 def gaus(x, mu, sig):
     return np.exp(-( ( ( x - mu )/sig )**2 )/2)/( np.sqrt( 2*np.pi )*sig )
 
+
+def create_log(output_log_file: str):
+    f = open(output_log_file, "w")
+    f.write(datetime.now().__str__() + "\n")
+    f.close()
+
+
+def output_log(output_log_file: str, string: str):
+
+    # print(string)
+    f = open(output_log_file, "a")
+    f.write(string + "\n")
+    f.close()

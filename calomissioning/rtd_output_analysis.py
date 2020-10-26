@@ -5,9 +5,7 @@ import ROOT
 import tqdm
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.signal import find_peaks
-from scipy.optimize import curve_fit
-from functions.other_functions import sncd_parse_arguments, gaussian, chi2, inner_product
+from functions.other_functions import *
 from src.PMT_Array import PMT_Array
 from src.PMT_Waveform import PMT_Waveform
 
@@ -69,6 +67,11 @@ def read_average_waveforms(temp_file_name: str, num_pmts: int):
     return templates
 
 
+def read_cable_lengths():
+    cable_lengths = []
+    return cable_lengths
+
+
 def main():
 
     # Handle the file inputs
@@ -110,6 +113,8 @@ def main():
     if config_file_name is not None:
         pmt_array.apply_setting(config_file_name)
 
+    cable_lengths = read_cable_lengths()
+
     # Open file
     file = ROOT.TFile(input_data_filename, "READ")
     file.cd()
@@ -120,7 +125,7 @@ def main():
     # Counter for testing
     event_counter = [0 for i in range(num_pmts)]
 
-    raw_amplitudes = [[] for i in range(num_pmts)]
+    # raw_amplitudes = [[] for i in range(num_pmts)]
 
     '''templates = read_average_waveforms("~/Desktop/test_template.root", num_pmts)
     amp_hists = ROOT.TList()
@@ -133,15 +138,22 @@ def main():
                               num_bins, 0, max_amp)
         amp_hists.Add(temp_hist)'''
 
+    h_map = ROOT.TH2I("event_map", "event_map", topology[1], 0, topology[1], topology[0], 0, topology[0])
+    
+    # create_log("run_167_output.txt")
+
+    x = []
+
     # Run over file to create containers
     for event in tqdm.tqdm(tree):
+        
         event_num = event.event_num
         row = event.row
         col = event.column
         OM_ID = event.OM_ID
         charge = -1*event.charge
         baseline = event.baseline
-        amplitude = -1*event.amplitude/8
+        amplitude = -1*event.amplitude
         fall_time = event.fall_time
         rise_time = event.rise_time
         peak_time = event.peak_time
@@ -149,10 +161,22 @@ def main():
         calo_tdc = event.calo_tdc
         run_num = event.run_num
         wall_num = event.wall_num
+        trig_num = event.trig_id
 
-        print("calo_hit_num:", calo_hit_num, "event_num:", event_num)
+        if col == 9 and row == 7:
+            x.append(trig_num)
+        
+        '''output_log("run_167_output.txt", "{},{},{},{},{},"
+                                         "{},{},{},{},{},"
+                                         "{},{},{},{},{}".format(event_num, row, col, OM_ID, charge,
+                                                                 baseline, amplitude, fall_time, rise_time,
+                                                                 peak_time, calo_hit_num, calo_tdc, run_num,
+                                                                 wall_num, trig_num))'''
 
+        #print("calo_hit_num:", calo_hit_num, "event_num:", event_num, "trig_num:", trig_num)
         # raw_amplitudes[OM_ID].append(amplitude)
+        
+        h_map.Fill(col, row, 1)
 
         '''pmt_waveform = PMT_Waveform(event.waveform, pmt_array.get_pmt_object_number(OM_ID))
         peak = pmt_waveform.get_pmt_pulse_peak_position()
@@ -167,11 +191,45 @@ def main():
                 print("Waveform", len(pmt_waveform.get_pmt_waveform_reduced()[peak - 50:peak + 350]))
                 print("Template", len(templates[OM_ID]))'''
 
-        if event_counter[0] == num_events:
+        '''if event_counter[0] == num_events:
             break
-        event_counter[OM_ID] += 1
+        event_counter[OM_ID] += 1'''
 
         # del pmt_waveform
+
+    sel_evnts = []
+    for i, val in enumerate(x):
+        if val in sel_evnts:
+            pass
+        else:
+            sel_evnts.append(val)
+
+    y = [[] for i in range(len(sel_evnts))]
+    sel_evnts = np.array(sel_evnts)
+
+    for event in tqdm.tqdm(tree):
+        event_num = event.event_num
+        row = event.row
+        col = event.column
+        OM_ID = event.OM_ID
+        charge = -1 * event.charge
+        baseline = event.baseline
+        amplitude = -1 * event.amplitude
+        fall_time = event.fall_time
+        rise_time = event.rise_time
+        peak_time = event.peak_time
+        calo_hit_num = event.calo_hit_num
+        calo_tdc = event.calo_tdc
+        run_num = event.run_num
+        wall_num = event.wall_num
+        trig_num = event.trig_id
+        pulse_time = event.pulse_time
+
+        val = calo_tdc*6.25 - 400 + pulse_time - cable_lengths[OM_ID]
+
+        if len(np.where(sel_evnts == trig_num)[0]) > 0:
+            t = np.where(sel_evnts == trig_num)[0][0]
+            y[t].append([trig_num, val])
 
     '''amp_bins = [i*max_amp/num_bins for i in range(num_bins)]
     amp_cuts = []
@@ -190,6 +248,13 @@ def main():
         plt.close()
     # output_file.Close()'''
 
+    ROOT.gStyle.SetOptStat(0)
+    canvas = ROOT.TCanvas()
+    canvas.cd()
+    h_map.Draw("colztext")
+    canvas.Update()
+    canvas.SaveAs("~/Desktop/map.png")
+    
     return
 
     '''raw_amplitudes_array = []

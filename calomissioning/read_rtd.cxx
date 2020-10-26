@@ -27,6 +27,13 @@
 #include <sncabling/service.h>
 #include <sncabling/calo_signal_cabling.h>
 
+
+Double_t get_inner_product( std::vector<Double_t> &vec1, std::vector<Double_t> &vec2 );
+std::vector<std::vector<Double_t>> get_template_pulses( std::string template_file , Int_t n_temp );
+void update_temp_vector( std::vector<std::vector<Double_t>> &template_vectors, std::vector<Double_t> new_vector, Int_t OM_ID );
+Int_t get_peak_cell( std::vector<Double_t> &vec );
+void write_templates( std::vector<std::vector<Double_t>> &template_vectors );
+
 bool debug = true;
 
 
@@ -85,6 +92,7 @@ int main(int argc, char **argv)
 
         std::clog<<"Input file name : "<<input_file_name<<std::endl;
 
+        std::vector<std::vector<Double_t>> template_vectors;
 
         sncabling::service snCabling;
         snCabling.initialize_simple();
@@ -277,17 +285,21 @@ int main(int argc, char **argv)
 		                    }
 		                    */
 
-                            /*
-                            std::vector<uint16_t> temp_vector;
-                            uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
-                            for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
+		                    // Select a small charge range to add to template pulses
+                            if ( -30 < charge < -20 )
                             {
-                                uint16_t adc = calo_hit.get_waveforms().get_adc(isample,ichannel);
-                                temp_vector.push_back(adc);
+                                std::vector<Double_t> temp_vector;
+                                uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
+                                for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
+                                {
+                                    uint16_t adc = calo_hit.get_waveforms().get_adc(isample,ichannel);
+                                    temp_vector.push_back( (Double_t)adc );
+                                }
+                                update_temp_vector( template_vectors, temp_vector, OM_ID );
                             }
 
                             //waveform = temp_vector;
-                            */
+
 		                    tree.Fill();
 	                    }
 	                }
@@ -302,6 +314,8 @@ int main(int argc, char **argv)
         output_file->Write();
         output_file->Close();
 
+        write_templates( template_vectors );
+
         } catch (std::exception & error)
         {
             std::cerr << "[error] " << error.what() << std::endl;
@@ -312,3 +326,119 @@ int main(int argc, char **argv)
         return error_code;
 }
 
+std::vector<std::vector<Double_t>> get_template_pulses( std::string template_file , Int_t n_temp )
+{
+    std::vector<std::vector<Double_t>> template_pulses;
+    TFile temp_root_file(template_file.c_str(), "READ");
+    for (Int_t itemp = 0; itemp < n_temp; itemp++)
+    {
+        std::cout << "Template: " << itemp << std::endl;
+        std::vector<Double_t> temp_vector; // Define a temporary filling vector
+        //Get the template histogram from the file
+        std::string hist_name = "Template_Ch" + std::to_string(itemp);
+
+        TH1D* template_hist = (TH1D*)temp_root_file.Get(hist_name.c_str());
+
+        for (Int_t ihist = 1; ihist < template_hist->GetEntries(); ihist++)
+        {
+            temp_vector.push_back(template_hist->GetBinContent(ihist));
+            std::cout << ihist << " : " << temp_vector[ihist-1] << std::endl;
+        }
+        std::cout << std::endl;
+        delete template_hist;
+        Double_t norm = sqrt(get_inner_product( temp_vector, temp_vector ));
+
+        std::cout << "Normalised: " << std::endl;
+
+        if (norm <= 0)
+        {
+            std::cout << "Error: Abnormal template pulse" << std::endl;
+            exit(1);
+        }
+
+        for (int ivec = 0 ; ivec < (Int_t)temp_vector.size() ;  ivec++)
+        {
+            temp_vector[ivec] = temp_vector[ivec]/norm;
+            std::cout << ivec << " : " << temp_vector[ivec] << std::endl;
+        }
+        std::cout << std::endl;
+        template_pulses.push_back(temp_vector);
+    }
+    temp_root_file.Close();
+
+    return template_pulses;
+}
+Double_t get_inner_product( std::vector<Double_t> &vec1, std::vector<Double_t> &vec2 )
+{
+    if ( vec1.size() != vec2.size() )
+    {
+        std::cout << ">>> Length of vectors must be the same for an inner product to be calculated" << std::endl;
+        std::cout << ">>> Length of vec1: " << vec1.size() << " != length of vec2: " << vec2.size() << std::endl;
+        exit(1);
+    }
+
+    Double_t inner_product = 0;
+    for ( Int_t i_vec = 0 ; i_vec < (Int_t)vec1.size() ; i_vec++ )
+    {
+        inner_product += vec1[i_vec]*vec2[i_vec];
+    }
+    return inner_product;
+}
+void update_temp_vector( std::vector<std::vector<Double_t>> &template_vectors, std::vector<Double_t> new_vector, Int_t OM_ID )
+{
+    Int_t temp_length = 80;
+    Int_t peak_cell = get_peak_cell( new_vector );
+
+    Int_t lower_edge = 30;
+    Int_t higher_edge = 50;
+
+    Int_t j = 0;
+    for (Int_t i = peak_cell - lower_edge; i < peak_cell + higher_edge; ++i)
+    {
+        template_vectors[OM_ID][j] += new_vector[i];
+        j++;
+
+        if ( j == temp_length )
+        {
+            break;
+        }
+    }
+}
+Int_t get_peak_cell( std::vector<Double_t> &vec )
+{
+    Int_t peak_cell = 0;
+    Double_t temp = vec[0];
+    for ( Int_t i = 0 ; i < (Int_t)vec.size() ; i++ )
+    {
+        if ( vec[i] < temp )
+        {
+            temp = vec[i];
+            peak_cell = i;
+        }
+    }
+    return peak_cell;
+}
+void write_templates( std::vector<std::vector<Double_t>> &template_vectors )
+{
+    TFile* template_root_file = new TFile("templates.root", "RECREATE");
+    template_root_file->cd();
+
+    for (Int_t i_temp = 0; i_temp < ; ++i_temp)
+    {
+        std::string name = "Template_Ch" + std::to_string(i_temp);
+        TH1D* hist = new TH1D(name, name, template_vectors[i_temp].size(), 0, template_vectors[i_temp].size());
+
+        Double_t norm = sqrt( get_inner_product( template_vectors[i_temp], template_vectors[i_temp] ) );
+        if ( norm == 0 )
+        {
+            return;
+        }
+
+        for (int j_bin = 0; j_bin < template_vectors[i_temp].size(); ++j_bin)
+        {
+            hist->SetBinContent(j, template_vectors[i_temp][j]/norm);
+        }
+        hist->Write();
+        delete hist;
+    }
+}
