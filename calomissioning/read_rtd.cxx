@@ -306,8 +306,8 @@ int main(int argc, char **argv)
                                 for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
                                 {
                                     uint16_t adc = calo_hit.get_waveforms().get_adc(isample,ichannel);
-                                    temp_vector.push_back( (Double_t)adc );
-                                    std::cout << isample << " : " << adc << std::endl;
+                                    temp_vector.push_back( (Double_t)adc - baseline);
+                                    std::cout << isample << " : " << adc - baseline << std::endl;
                                 }
                                 update_temp_vector( template_vectors, temp_vector, OM_ID );
                             }
