@@ -98,8 +98,8 @@ int main(int argc, char **argv)
         //std::vector<Double_t> temp(130, 0.0);
         //std::vector<std::vector<Double_t>> template_vectors(260, temp);
         std::vector<std::vector<Double_t>> template_vectors = get_template_pulses( "templates.root", 260 );
-        std::cout << "Initialise template vectors" << std::endl;
-        for (int j = 0; j < (Int_t)template_vectors.size(); ++j)
+        //std::cout << "Initialise template vectors" << std::endl;
+        /*for (int j = 0; j < (Int_t)template_vectors.size(); ++j)
         {
             std::cout << std::endl;
             std::cout << "Template " << j << std::endl;
@@ -107,7 +107,7 @@ int main(int argc, char **argv)
             {
                 std::cout << "( " << i << " , " << template_vectors[j][i] << " )" << std::endl;
             }
-        }
+        }*/
 
         sncabling::service snCabling;
         snCabling.initialize_simple();
@@ -370,20 +370,26 @@ std::vector<std::vector<Double_t>> get_template_pulses( std::string template_fil
     for (Int_t itemp = 0; itemp < n_temp; itemp++)
     {
         //std::cout << "Template: " << itemp << std::endl;
+        if ( itemp == 83 || itemp == 109 || itemp == 201 )
+        {
+            std::vector<Double_t> temp_vector(130, 0.0);
+            template_pulses.push_back(temp_vector);
+            continue;
+        }
         std::vector<Double_t> temp_vector; // Define a temporary filling vector
         //Get the template histogram from the file
         std::string hist_name = "Template_Ch" + std::to_string(itemp);
 
         TH1D* template_hist = (TH1D*)temp_root_file.Get(hist_name.c_str());
 
-        for (Int_t ihist = 1; ihist < template_hist->GetEntries(); ihist++)
+        for (Int_t ihist = 1; ihist < template_hist->GetEntries() + 1; ihist++)
         {
             temp_vector.push_back(template_hist->GetBinContent(ihist));
             //std::cout << ihist << " : " << temp_vector[ihist-1] << std::endl;
         }
         std::cout << std::endl;
         delete template_hist;
-        Double_t norm = sqrt(get_inner_product( temp_vector, temp_vector ));
+        Double_t norm = sqrt( get_inner_product( temp_vector, temp_vector ) );
 
         std::cout << "Normalised: " << std::endl;
 
