@@ -411,7 +411,7 @@ void update_temp_vector( std::vector<std::vector<Double_t>> &template_vectors, s
     Double_t my_baseline = get_baseline( new_vector );
 
     Int_t j = 0;
-    for (Int_t i = peak_cell - lower_edge; i <= peak_cell + higher_edge; ++i)
+    for (Int_t i = peak_cell - lower_edge; i < peak_cell + higher_edge; ++i)
     {
         template_vectors[OM_ID][j] += new_vector[i] - my_baseline;
         j++;
@@ -465,8 +465,8 @@ void write_templates( std::vector<std::vector<Double_t>> &template_vectors )
 
         for (int j_bin = 1; j_bin < (Int_t)template_vectors[i_temp].size(); ++j_bin)
         {
-            hist->SetBinContent(j_bin, template_vectors[i_temp][j_bin]/norm);
-            std::cout << j_bin << " " << template_vectors[i_temp][j_bin]/norm << std::endl;
+            hist->SetBinContent(j_bin, template_vectors[i_temp][j_bin - 1]/norm);
+            std::cout << j_bin << " " << template_vectors[i_temp][j_bin - 1]/norm << std::endl;
         }
         hist->Write();
         delete hist;
