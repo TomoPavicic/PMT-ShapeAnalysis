@@ -35,7 +35,7 @@ void update_temp_vector( std::vector<std::vector<Double_t>> &template_vectors, s
 Int_t get_peak_cell( std::vector<Double_t> &vec );
 void write_templates( std::vector<std::vector<Double_t>> &template_vectors );
 Double_t get_baseline( std::vector<Double_t> &vec );
-Double_t get_max_value( std::vector<Double_t> &vec );
+Int_t get_max_value( std::vector<Double_t> &vec );
 
 bool debug = true;
 
@@ -315,6 +315,11 @@ int main(int argc, char **argv)
                                 }
                                 update_temp_vector( template_vectors, temp_vector, OM_ID );
                             }*/
+                            if ( ch_peak_cell > 1024 - 160)
+                            {
+                                continue;
+                            }
+
                             Int_t n_try = 50;
                             std::vector<Double_t> mf_output;
                             Double_t norm_temp = sqrt( get_inner_product( template_vectors[OM_ID], template_vectors[OM_ID] ) );
@@ -335,7 +340,7 @@ int main(int argc, char **argv)
                                 mf_output.push_back(mf);
                             }
 
-                            calo_time = get_max_value(mf_output);
+                            calo_time = get_max_value(mf_output) + ch_peak_cell - 30 - n_try/2;
 
                             //waveform = temp_vector;
 
@@ -513,15 +518,17 @@ Double_t get_baseline( std::vector<Double_t> &vec )
     }
     return (Double_t)baseline/20.0;
 }
-Double_t get_max_value( std::vector<Double_t> &vec )
+Int_t get_max_value( std::vector<Double_t> &vec )
 {
     Double_t temp = 0.0;
+    Int_t pos = 0;
     for (int i = 0; i < (Int_t)vec.size(); ++i)
     {
         if ( vec[i] > temp )
         {
             temp = vec[i];
+            pos = i;
         }
     }
-    return temp;
+    return i;
 }
