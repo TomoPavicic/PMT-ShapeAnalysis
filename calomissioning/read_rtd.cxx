@@ -463,7 +463,7 @@ void write_templates( std::vector<std::vector<Double_t>> &template_vectors )
             continue;
         }
 
-        for (int j_bin = 1; j_bin <= (Int_t)template_vectors[i_temp].size() + 1; ++j_bin)
+        for (int j_bin = 1; j_bin < (Int_t)template_vectors[i_temp].size(); ++j_bin)
         {
             hist->SetBinContent(j_bin, template_vectors[i_temp][j_bin]/norm);
             std::cout << j_bin << " " << template_vectors[i_temp][j_bin]/norm << std::endl;
