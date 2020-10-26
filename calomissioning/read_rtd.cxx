@@ -315,13 +315,14 @@ int main(int argc, char **argv)
                                 }
                                 update_temp_vector( template_vectors, temp_vector, OM_ID );
                             }*/
+                            Int_t n_try = 50;
                             std::vector<Double_t> mf_output;
                             Double_t norm_temp = sqrt( get_inner_product( template_vectors[OM_ID], template_vectors[OM_ID] ) );
-                            for (int i = 0; i < 100; ++i)
+                            for (int i = 0; i < n_try; ++i)
                             {
                                 std::vector<Double_t> temp_vector;
                                 uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
-                                for (uint16_t isample = ch_peak_cell - 30; isample < ch_peak_cell + 100; isample++)
+                                for (uint16_t isample = ch_peak_cell - 30 - n_try/2 + i; isample < ch_peak_cell + 100 - n_try/2 + i; isample++)
                                 {
                                     uint16_t adc = calo_hit.get_waveforms().get_adc(isample,ichannel);
                                     temp_vector.push_back( (Double_t)adc - baseline);
@@ -366,6 +367,8 @@ int main(int argc, char **argv)
 std::vector<std::vector<Double_t>> get_template_pulses( std::string template_file , Int_t n_temp )
 {
     std::vector<std::vector<Double_t>> template_pulses;
+    std::cout << std::endl;
+    std::cout << "Template file name : " << template_file << std::endl;
     TFile temp_root_file(template_file.c_str(), "READ");
     for (Int_t itemp = 0; itemp < n_temp; itemp++)
     {
@@ -387,11 +390,8 @@ std::vector<std::vector<Double_t>> get_template_pulses( std::string template_fil
             temp_vector.push_back(template_hist->GetBinContent(ihist));
             //std::cout << ihist << " : " << temp_vector[ihist-1] << std::endl;
         }
-        std::cout << std::endl;
         delete template_hist;
         Double_t norm = sqrt( get_inner_product( temp_vector, temp_vector ) );
-
-        std::cout << "Normalised: " << std::endl;
 
         if (norm <= 0)
         {
@@ -408,6 +408,8 @@ std::vector<std::vector<Double_t>> get_template_pulses( std::string template_fil
         template_pulses.push_back(temp_vector);
     }
     temp_root_file.Close();
+
+    std::cout << "Success..." << std::endl;
 
     return template_pulses;
 }
