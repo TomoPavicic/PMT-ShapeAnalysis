@@ -420,15 +420,13 @@ void update_temp_vector( std::vector<std::vector<Double_t>> &template_vectors, s
         }
     }
 
-    for (int j = 0; j < (Int_t)template_vectors.size(); ++j)
+    std::cout << std::endl;
+    std::cout << "Template " << OM_ID << std::endl;
+    for (int i = 0; i < (Int_t)template_vectors[OM_ID].size(); ++i)
     {
-        std::cout << std::endl;
-        std::cout << "Template " << j << std::endl;
-        for (int i = 0; i < (Int_t)template_vectors[j].size(); ++i)
-        {
-            std::cout << "( " << i << " , " << template_vectors[j][i] << " )" << std::endl;
-        }
+        std::cout << "( " << i << " , " << template_vectors[OM_ID][i] << " )" << std::endl;
     }
+
 }
 Int_t get_peak_cell( std::vector<Double_t> &vec )
 {
