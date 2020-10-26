@@ -94,7 +94,7 @@ int main(int argc, char **argv)
 
         std::clog<<"Input file name : "<<input_file_name<<std::endl;
 
-        std::vector<Double_t> temp(80, 0.0);
+        std::vector<Double_t> temp(130, 0.0);
         std::vector<std::vector<Double_t>> template_vectors(260, temp);
         std::cout << "Initialise template vectors" << std::endl;
         for (int j = 0; j < (Int_t)template_vectors.size(); ++j)
@@ -402,11 +402,11 @@ void update_temp_vector( std::vector<std::vector<Double_t>> &template_vectors, s
     //std::cout << std::endl;
     //std::cout << "<<< update_temp_vector >>> " << std::endl;
     //std::cout << "OM_ID: " << OM_ID << std::endl;
-    Int_t temp_length = 80;
+    Int_t temp_length = 130;
     Int_t peak_cell = get_peak_cell( new_vector );
 
     Int_t lower_edge = 30;
-    Int_t higher_edge = 50;
+    Int_t higher_edge = 100;
 
     Double_t my_baseline = get_baseline( new_vector );
 
@@ -463,7 +463,7 @@ void write_templates( std::vector<std::vector<Double_t>> &template_vectors )
             continue;
         }
 
-        for (int j_bin = 0; j_bin < (Int_t)template_vectors[i_temp].size(); ++j_bin)
+        for (int j_bin = 1; j_bin =< (Int_t)template_vectors[i_temp].size(); ++j_bin)
         {
             hist->SetBinContent(j_bin, template_vectors[i_temp][j_bin]/norm);
             //std::cout << j_bin << " " << template_vectors[i_temp][j_bin]/norm << std::endl;
