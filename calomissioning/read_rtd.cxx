@@ -393,8 +393,8 @@ int main(int argc, char **argv)
                                 std::string name = "hist_" + std::to_string(i);
 
                                 TH1D* hist = new TH1D(name.c_str(), name.c_str(), 130, 0, 130/2.56);
-                                TLegend* legend = new TLegend(0.7, 0, 0.9, 0.2);
-                                gStyle->SetLegendBorderSize(0);
+                                TLegend* legend = new TLegend(0.7, 0.1, 0.9, 0.2);
+                                //gStyle->SetLegendBorderSize(0);
 
                                 cont = false;
                                 for (int j = 1; j <= 130; ++j)
