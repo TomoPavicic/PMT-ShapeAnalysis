@@ -413,7 +413,7 @@ int main(int argc, char **argv)
                                 hist->SetLineColor(1);
                                 hist->SetXTitle("Relative time /ns");
                                 hist->SetYTitle("Voltage /mV");
-                                std::string title = "M:1:9:7 MF: " + std::to_string(mf) + " FBT:" + std::to_string((ch_peak_cell - 30 - n_try/2)/2.56 + i) + " ns";
+                                std::string title = "M:1:9:7 MF: " + std::to_string(mf) + " FBT:" + std::to_string((ch_peak_cell - 30 - n_try/2 + i)/2.56) + " ns";
                                 hist->SetTitle(title.c_str());
 
                                 std::string can_name = "mf_output_" + std::to_string(i) + ".png";
@@ -432,6 +432,24 @@ int main(int argc, char **argv)
 
                                 mf_output.push_back(mf);
                             }
+
+                            TCanvas* new_canvas = new TCanvas();
+                            new_canvas->cd();
+                            new_canvas->SetGrid(true);
+
+                            TH1D* new_hist = new TH1D("mf_output", "mf_output", n_try,
+                                                      (ch_peak_cell - 30 - n_try/2)/2.56 , (ch_peak_cell - 30 + n_try/2)/2.56);
+
+                            for (int k = 0; k < n_try; ++k) {
+                                new_hist->SetBinContent(k+1, mf_output[k]);
+                            }
+
+                            new_hist->SetXTitle("Waveform time /ns");
+                            new_hist->SetYTitle("mf shape  output /mV");
+                            new_hist->SetTitle("M:1.9.7 pulse start finder");
+
+                            gStyle->SetOptStat(0);
+                            new_hist->Draw("HIST");
 
                             if (cont) {} else { return 1; }
 
