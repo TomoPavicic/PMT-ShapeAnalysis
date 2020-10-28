@@ -103,7 +103,7 @@ def fit_bismuth_function_from_file(root_file_name: str):
 
     for i_pmt in range(len(spectra_list)):
         if i_pmt == 0:
-            if spectra_list[i_pmt] is not 0x0:
+            if spectra_list[i_pmt]!= 0x0:
                 if spectra_list[i_pmt].GetEntries() == 0:
                     continue
                 canvas_name = "GAO607_000000_0000"
@@ -147,7 +147,7 @@ def fit_bismuth_function_from_file(root_file_name: str):
                 canvas.SaveAs(canvas_name, "pdf")
 
         elif i_pmt == 1:
-            if spectra_list[i_pmt] is not 0x0:
+            if spectra_list[i_pmt] != 0x0:
                 if spectra_list[i_pmt].GetEntries() == 0:
                     continue
                 canvas_name = "GAO612_000000_0000.pdf"
@@ -1683,6 +1683,13 @@ def gaussian(x, mean, sigma, amplitude, height):
     y = []
     for i in range(len(x)):
         y.append(amplitude*np.exp((-(x[i] - mean)**2)/(2*sigma**2)) + height)
+    return y
+
+
+def gaussian_noh(x, mean, sigma, amplitude):
+    y = []
+    for i in range(len(x)):
+        y.append(amplitude*np.exp((-(x[i] - mean)**2)/(2*sigma**2)))
     return y
 
 
