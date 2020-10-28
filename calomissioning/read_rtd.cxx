@@ -413,7 +413,7 @@ int main(int argc, char **argv)
                                 hist->SetLineColor(1);
                                 hist->SetXTitle("Relative time /ns");
                                 hist->SetYTitle("Voltage /mV");
-                                std::string title = "M:1:9:7 MF: " + std::to_string(mf) + " FBT:" + std::to_string((ch_peak_cell - 30 - n_try/2)/2.56) + " ns";
+                                std::string title = "M:1:9:7 MF: " + std::to_string(mf) + " FBT:" + std::to_string((ch_peak_cell - 30 - n_try/2)/2.56 + i) + " ns";
                                 hist->SetTitle(title.c_str());
 
                                 std::string can_name = "mf_output_" + std::to_string(i) + ".png";
