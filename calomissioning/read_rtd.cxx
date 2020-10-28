@@ -414,11 +414,11 @@ int main(int argc, char **argv)
                                 hist->SetTitle(title.c_str());
 
                                 std::string can_name = "mf_output_" + std::to_string(i) + ".pdf";
-                                hist->Draw();
+                                hist->Draw("HIST");
                                 legend->AddEntry(hist, "test");
                                 legend->AddEntry(temp_hist, "template");
                                 my_canvas->SetGrid(true);
-                                temp_hist->Draw("SAME");
+                                temp_hist->Draw("HIST SAME C");
                                 legend->Draw();
                                 my_canvas->Update();
                                 my_canvas->SaveAs(can_name.c_str());
