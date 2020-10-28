@@ -319,7 +319,7 @@ int main(int argc, char **argv)
                                 update_temp_vector( template_vectors, temp_vector, OM_ID );
                             }*/
 
-                            if (OM_ID != 124){ continue; }
+                            //if (OM_ID != 124){ continue; }
 
                             if ( ch_peak_cell > 1024 - 160)
                             {
@@ -332,11 +332,11 @@ int main(int argc, char **argv)
 
                             uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
 
-                            TCanvas* waveform_canvas = new TCanvas();
+                            /*TCanvas* waveform_canvas = new TCanvas();
                             waveform_canvas->cd();
                             gStyle->SetOptStat(0);
                             TH1D* waveform_hist = new TH1D("waveform", "waveform", waveform_number_of_samples, 0, waveform_number_of_samples/2.56);
-                            std::vector<Double_t> waveform_adc;
+                            std::vector<Double_t> waveform_adc;*/
 
                             for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
                             {
@@ -346,33 +346,33 @@ int main(int argc, char **argv)
 
                             Double_t my_baseline = get_baseline( waveform_adc );
 
-                            for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
+                            /*for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
                             {
                                 Double_t volts = (Double_t)waveform_adc[isample] - my_baseline;
                                 waveform_hist->SetBinContent(isample+1, volts/2.048);
-                            }
+                            }*/
 
-                            waveform_hist->SetXTitle("Time stamp /ns");
-                            waveform_hist->SetYTitle("Voltage /mV");
-                            std::string w_title = "M:1:9:7 Waveform";
-                            waveform_hist->SetTitle(w_title.c_str());
+                            //waveform_hist->SetXTitle("Time stamp /ns");
+                            //waveform_hist->SetYTitle("Voltage /mV");
+                            //std::string w_title = "M:1:9:7 Waveform";
+                            //waveform_hist->SetTitle(w_title.c_str());
 
-                            std::string can_name = "waveform.png";
-                            waveform_hist->Draw();
-                            waveform_canvas->SetGrid(true);
-                            waveform_canvas->Update();
-                            waveform_canvas->SaveAs(can_name.c_str());
+                            //std::string can_name = "waveform.png";
+                            //waveform_hist->Draw();
+                            //waveform_canvas->SetGrid(true);
+                            //waveform_canvas->Update();
+                            //waveform_canvas->SaveAs(can_name.c_str());
 
-                            delete waveform_hist;
-                            delete waveform_canvas;
+                            //delete waveform_hist;
+                            //delete waveform_canvas;
 
-                            std::string t_name = "template_" + std::to_string(OM_ID);
-                            TH1D* temp_hist = new TH1D(t_name.c_str(), t_name.c_str(), 130, 0, 130/2.56);
-                            temp_hist->SetLineColor(2);
+                            //std::string t_name = "template_" + std::to_string(OM_ID);
+                            //TH1D* temp_hist = new TH1D(t_name.c_str(), t_name.c_str(), 130, 0, 130/2.56);
+                            //temp_hist->SetLineColor(2);
 
-                            for (int k = 0; k < 130; ++k) {
+                           /* for (int k = 0; k < 130; ++k) {
                                 temp_hist->SetBinContent(k+1, template_vectors[OM_ID][k]);
-                            }
+                            }*/
 
                             for (int i = 0; i < n_try; ++i)
                             {
@@ -386,7 +386,7 @@ int main(int argc, char **argv)
                                     //std::cout << isample << " : " << adc - baseline << std::endl;
                                 }
 
-                                TCanvas* my_canvas = new TCanvas();
+                               /* TCanvas* my_canvas = new TCanvas();
                                 my_canvas->cd();
 
                                 gStyle->SetOptStat(0);
@@ -396,18 +396,19 @@ int main(int argc, char **argv)
                                 TLegend* legend = new TLegend(0.7, 0.1, 0.9, 0.2);
                                 //gStyle->SetLegendBorderSize(0);
 
-                                cont = false;
+                                //cont = false;
                                 for (int j = 1; j <= 130; ++j)
                                 {
                                     hist->SetBinContent(j, temp_vector[j-1]/2.048);
                                 }
                                 temp_hist->Scale(hist->Integral()/temp_hist->Integral());
                                 temp_hist->Sumw2();
+                                */
 
                                 Double_t norm_test = sqrt( get_inner_product( temp_vector, temp_vector ) );
                                 Double_t mf = get_inner_product( temp_vector, template_vectors[OM_ID] )/( norm_temp * norm_test );
 
-                                hist->SetLineColor(1);
+                                /*hist->SetLineColor(1);
                                 hist->SetXTitle("Relative time /ns");
                                 hist->SetYTitle("Voltage /mV");
                                 std::string title = "M:1:9:7 MF: " + std::to_string(mf) + " FBT:" + std::to_string((ch_peak_cell - 30 - n_try/2)/2.56) + " ns";
@@ -425,12 +426,12 @@ int main(int argc, char **argv)
 
                                 delete hist;
                                 delete my_canvas;
-                                delete legend;
+                                delete legend;*/
 
                                 mf_output.push_back(mf);
                             }
 
-                            if (cont) {} else { return 1; }
+                            //if (cont) {} else { return 1; }
 
 
                             calo_time = get_max_value(mf_output) + ch_peak_cell - 30 - n_try/2;
