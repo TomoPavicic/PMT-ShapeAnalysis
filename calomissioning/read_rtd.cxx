@@ -358,6 +358,8 @@ int main(int argc, char **argv)
 
                             std::string can_name = "waveform.pdf";
                             waveform_hist->Draw();
+                            waveform_canvas->SetGrid(true);
+                            waveform_canvas->Update();
                             waveform_canvas->SaveAs(can_name.c_str());
 
                             delete waveform_hist;
@@ -365,6 +367,7 @@ int main(int argc, char **argv)
 
                             std::string t_name = "template_" + std::to_string(OM_ID);
                             TH1D* temp_hist = new TH1D(t_name.c_str(), t_name.c_str(), 130, 0, 130/2.56);
+                            temp_hist->SetLineColor(2);
 
                             for (int k = 0; k < 130; ++k) {
                                 temp_hist->SetBinContent(k+1, template_vectors[OM_ID][k]);
@@ -389,6 +392,8 @@ int main(int argc, char **argv)
                                 std::string name = "hist_" + std::to_string(i);
 
                                 TH1D* hist = new TH1D(name.c_str(), name.c_str(), 130, 0, 130/2.56);
+                                TLengend* legend = new TLegend(0.7, 0, 0.9, 0.2);
+                                gStyle->SetLegendBorderSize(0);
 
                                 cont = false;
                                 for (int j = 1; j <= 130; ++j)
@@ -396,22 +401,30 @@ int main(int argc, char **argv)
                                     hist->SetBinContent(j, temp_vector[j-1]/2.048);
                                 }
                                 temp_hist->Scale(hist->Integral()/temp_hist->Integral());
+                                temp_hist.Sumw2();
 
                                 Double_t norm_test = sqrt( get_inner_product( temp_vector, temp_vector ) );
                                 Double_t mf = get_inner_product( temp_vector, template_vectors[OM_ID] )/( norm_temp * norm_test );
 
+                                hist->SetLineColor(1);
                                 hist->SetXTitle("Relative time /ns");
                                 hist->SetYTitle("Voltage /mV");
-                                std::string title = "M:1:9:7 MF: " + std::to_string(mf) + " FBT:" + std::to_string((ch_peak_cell - 30 - n_try/2)/2.56);
+                                std::string title = "M:1:9:7 MF: " + std::to_string(mf) + " FBT:" + std::to_string((ch_peak_cell - 30 - n_try/2)/2.56) + " ns";
                                 hist->SetTitle(title.c_str());
 
                                 std::string can_name = "mf_output_" + std::to_string(i) + ".pdf";
                                 hist->Draw();
+                                legend->AddEntry(hist, "test");
+                                legend->AddEntry(temp_hist, "template");
+                                my_canvas->SetGrid(true);
                                 temp_hist->Draw("SAME");
+                                legend->Draw();
+                                my_canvas->Update();
                                 my_canvas->SaveAs(can_name.c_str());
 
                                 delete hist;
                                 delete my_canvas;
+                                delete legend;
 
                                 mf_output.push_back(mf);
                             }
