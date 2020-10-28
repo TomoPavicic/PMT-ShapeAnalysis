@@ -140,7 +140,7 @@ def main():
 
     h_map = ROOT.TH2I("event_map", "event_map", topology[1], 0, topology[1], topology[0], 0, topology[0])
     
-    # create_log("run_167_output.txt")
+    create_log("run_167_output.txt")
 
     x = []
 
@@ -165,13 +165,6 @@ def main():
 
         if col == 9 and row == 7:
             x.append(trig_num)
-        
-        '''output_log("run_167_output.txt", "{},{},{},{},{},"
-                                         "{},{},{},{},{},"
-                                         "{},{},{},{},{}".format(event_num, row, col, OM_ID, charge,
-                                                                 baseline, amplitude, fall_time, rise_time,
-                                                                 peak_time, calo_hit_num, calo_tdc, run_num,
-                                                                 wall_num, trig_num))'''
 
         #print("calo_hit_num:", calo_hit_num, "event_num:", event_num, "trig_num:", trig_num)
         # raw_amplitudes[OM_ID].append(amplitude)
@@ -223,14 +216,16 @@ def main():
         run_num = event.run_num
         wall_num = event.wall_num
         trig_num = event.trig_id
-        pulse_time = event.pulse_time
+        pulse_time = event.calo_time
 
-        val = calo_tdc*6.25 - 400 + pulse_time - cable_lengths[OM_ID]
+        val = calo_tdc*6.25 - 400 + pulse_time*6.25
 
         if len(np.where(sel_evnts == trig_num)[0]) > 0:
-            t = np.where(sel_evnts == trig_num)[0][0]
-            y[t].append([trig_num, val])
-
+            output_log("run_167_output.txt", "{},{},{},{},{},"
+                                             "{},{},{},{},{},"
+                                             "{}".format(event_num, row, col, OM_ID,
+                                                                        peak_time, calo_hit_num, calo_tdc, run_num,
+                                                                        wall_num, trig_num, pulse_time))
     '''amp_bins = [i*max_amp/num_bins for i in range(num_bins)]
     amp_cuts = []
 

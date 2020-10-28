@@ -154,6 +154,8 @@ int main(int argc, char **argv)
         tree.Branch("calo_time",&calo_time);
         //tree.Branch("waveform",&waveform);
 
+        bool cont = true;
+
         // Configuration for raw data reader
         snfee::io::multifile_data_reader::config_type reader_cfg;
         reader_cfg.filenames.push_back(input_file_name);
@@ -315,6 +317,9 @@ int main(int argc, char **argv)
                                 }
                                 update_temp_vector( template_vectors, temp_vector, OM_ID );
                             }*/
+
+                            if (OM_ID != 124){ continue; }
+
                             if ( ch_peak_cell > 1024 - 160)
                             {
                                 continue;
@@ -323,29 +328,103 @@ int main(int argc, char **argv)
                             Int_t n_try = 50;
                             std::vector<Double_t> mf_output;
                             Double_t norm_temp = sqrt( get_inner_product( template_vectors[OM_ID], template_vectors[OM_ID] ) );
+
+                            uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
+
+                            TCanvas* waveform_canvas = new TCanvas();
+                            waveform_canvas->cd();
+                            gStyle->SetOptStat(0);
+                            TH1D* waveform_hist = new TH1D("waveform", "waveform", waveform_number_of_samples, 0, waveform_number_of_samples/2.56);
+                            std::vector<Double_t> waveform_adc;
+
+                            for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
+                            {
+                                uint16_t adc = calo_hit.get_waveforms().get_adc(isample,ichannel);
+                                waveform_adc.push_back(adc);
+                            }
+
+                            Double_t my_baseline = get_baseline( waveform_adc );
+
+                            for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
+                            {
+                                Double_t volts = (Double_t)waveform_adc[isample] - my_baseline;
+                                waveform_hist.SetBinContent(isample+1, volts/2.048)
+                            }
+
+                            waveform_hist->SetXTitle("Time stamp /ns");
+                            waveform_hist->SetYTitle("Voltage /mV");
+                            std::string w_title = "M:1:9:7 Waveform";
+                            waveform_hist->SetTitle(w_title.c_str());
+
+                            std::string can_name = "waveform.pdf";
+                            waveform_hist->Draw();
+                            waveform_canvas->SaveAs(can_name.c_str());
+
+                            delete waveform_hist;
+                            delete waveform_canvas;
+
+                            std::string t_name = "template_" + std::to_string(OM_ID);
+                            TH1D* temp_hist = new TH1D(t_name.c_str(), t_name.c_str(), 130, 0, 130/2.56);
+
+                            for (int k = 0; k < 130; ++k) {
+                                temp_hist.SetBinContent(k+1, template_vectors[OM_ID][k]);
+                            }
+
                             for (int i = 0; i < n_try; ++i)
                             {
                                 std::vector<Double_t> temp_vector;
-                                uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
+
                                 for (uint16_t isample = ch_peak_cell - 30 - n_try/2 + i; isample < ch_peak_cell + 100 - n_try/2 + i; isample++)
                                 {
-                                    uint16_t adc = calo_hit.get_waveforms().get_adc(isample,ichannel);
-                                    temp_vector.push_back( (Double_t)adc - baseline);
+                                    //uint16_t adc = calo_hit.get_waveforms().get_adc(isample,ichannel);
+                                    Double_t volts = (Double_t)waveform_adc[isample] - my_baseline;
+                                    temp_vector.push_back( volts );
                                     //std::cout << isample << " : " << adc - baseline << std::endl;
                                 }
+
+                                TCanvas* my_canvas = new TCanvas();
+                                my_canvas->cd();
+
+                                gStyle->SetOptStat(0);
+                                std::string name = "hist_" + std::to_string(i);
+
+                                TH1D* hist = new TH1D(name.c_str(), name.c_str(), 130, 0, 130/2.56);
+
+                                cont = false;
+                                for (int j = 1; j <= 130; ++j)
+                                {
+                                    hist->SetBinContent(j, temp_vector[j-1]/2.048);
+                                }
+                                temp_hist->Scale(hist->Integral()/temp_hist->Integral());
 
                                 Double_t norm_test = sqrt( get_inner_product( temp_vector, temp_vector ) );
                                 Double_t mf = get_inner_product( temp_vector, template_vectors[OM_ID] )/( norm_temp * norm_test );
 
+                                hist->SetXTitle("Relative time /ns");
+                                hist->SetYTitle("Voltage /mV");
+                                std::string title = "M:1:9:7 MF: " + std::to_string(mf) + " FBT:" + std::to_string((ch_peak_cell - 30 - n_try/2)/2.56);
+                                hist->SetTitle(title.c_str());
+
+                                std::string can_name = "mf_output_" + std::to_string(i) + ".pdf";
+                                hist->Draw();
+                                temp_hist->Draw("SAME");
+                                my_canvas->SaveAs(can_name.c_str());
+
+                                delete hist;
+                                delete my_canvas;
+
                                 mf_output.push_back(mf);
                             }
+
+                            if (cont) {} else { return; }
+
 
                             calo_time = get_max_value(mf_output) + ch_peak_cell - 30 - n_try/2;
 
                             //waveform = temp_vector;
 
-		                    tree.Fill();
-	                    }
+                            tree.Fill();
+                        }
 	                }
 	            } //end of channels
             }//end of calohit
