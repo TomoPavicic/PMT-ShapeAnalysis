@@ -348,7 +348,7 @@ int main(int argc, char **argv)
                             for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
                             {
                                 Double_t volts = (Double_t)waveform_adc[isample] - my_baseline;
-                                waveform_hist.SetBinContent(isample+1, volts/2.048)
+                                waveform_hist->SetBinContent(isample+1, volts/2.048)
                             }
 
                             waveform_hist->SetXTitle("Time stamp /ns");
@@ -416,7 +416,7 @@ int main(int argc, char **argv)
                                 mf_output.push_back(mf);
                             }
 
-                            if (cont) {} else { return; }
+                            if (cont) {} else { return 1; }
 
 
                             calo_time = get_max_value(mf_output) + ch_peak_cell - 30 - n_try/2;
