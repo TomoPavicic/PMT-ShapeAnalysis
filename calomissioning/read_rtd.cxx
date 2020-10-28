@@ -450,6 +450,7 @@ int main(int argc, char **argv)
 
                             gStyle->SetOptStat(0);
                             new_hist->Draw("HIST");
+                            new_canvas->SaveAs("mf_output.png");
 
                             if (cont) {} else { return 1; }
 
