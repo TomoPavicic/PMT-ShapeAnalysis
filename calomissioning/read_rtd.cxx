@@ -348,7 +348,7 @@ int main(int argc, char **argv)
                             for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
                             {
                                 Double_t volts = (Double_t)waveform_adc[isample] - my_baseline;
-                                waveform_hist->SetBinContent(isample+1, volts/2.048)
+                                waveform_hist->SetBinContent(isample+1, volts/2.048);
                             }
 
                             waveform_hist->SetXTitle("Time stamp /ns");
@@ -367,7 +367,7 @@ int main(int argc, char **argv)
                             TH1D* temp_hist = new TH1D(t_name.c_str(), t_name.c_str(), 130, 0, 130/2.56);
 
                             for (int k = 0; k < 130; ++k) {
-                                temp_hist.SetBinContent(k+1, template_vectors[OM_ID][k]);
+                                temp_hist->SetBinContent(k+1, template_vectors[OM_ID][k]);
                             }
 
                             for (int i = 0; i < n_try; ++i)
