@@ -335,8 +335,8 @@ int main(int argc, char **argv)
                             /*TCanvas* waveform_canvas = new TCanvas();
                             waveform_canvas->cd();
                             gStyle->SetOptStat(0);
-                            TH1D* waveform_hist = new TH1D("waveform", "waveform", waveform_number_of_samples, 0, waveform_number_of_samples/2.56);
-                            std::vector<Double_t> waveform_adc;*/
+                            TH1D* waveform_hist = new TH1D("waveform", "waveform", waveform_number_of_samples, 0, waveform_number_of_samples/2.56);*/
+                            std::vector<Double_t> waveform_adc;
 
                             for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
                             {
