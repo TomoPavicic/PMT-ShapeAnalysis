@@ -11,6 +11,7 @@
 #include "TH1D.h"
 #include "TCanvas.h"
 #include "TStyle.h"
+#include "TLegend.h"
 
 
 #include <snfee/snfee.h>
@@ -401,7 +402,7 @@ int main(int argc, char **argv)
                                     hist->SetBinContent(j, temp_vector[j-1]/2.048);
                                 }
                                 temp_hist->Scale(hist->Integral()/temp_hist->Integral());
-                                temp_hist.Sumw2();
+                                temp_hist->Sumw2();
 
                                 Double_t norm_test = sqrt( get_inner_product( temp_vector, temp_vector ) );
                                 Double_t mf = get_inner_product( temp_vector, template_vectors[OM_ID] )/( norm_temp * norm_test );
