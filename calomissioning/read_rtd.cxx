@@ -357,7 +357,7 @@ int main(int argc, char **argv)
                             std::string w_title = "M:1:9:7 Waveform";
                             waveform_hist->SetTitle(w_title.c_str());
 
-                            std::string can_name = "waveform.pdf";
+                            std::string can_name = "waveform.png";
                             waveform_hist->Draw();
                             waveform_canvas->SetGrid(true);
                             waveform_canvas->Update();
@@ -413,7 +413,7 @@ int main(int argc, char **argv)
                                 std::string title = "M:1:9:7 MF: " + std::to_string(mf) + " FBT:" + std::to_string((ch_peak_cell - 30 - n_try/2)/2.56) + " ns";
                                 hist->SetTitle(title.c_str());
 
-                                std::string can_name = "mf_output_" + std::to_string(i) + ".pdf";
+                                std::string can_name = "mf_output_" + std::to_string(i) + ".png";
                                 hist->Draw("HIST");
                                 legend->AddEntry(hist, "test");
                                 legend->AddEntry(temp_hist, "template");
