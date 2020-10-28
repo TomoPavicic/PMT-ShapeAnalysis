@@ -393,7 +393,7 @@ int main(int argc, char **argv)
                                 std::string name = "hist_" + std::to_string(i);
 
                                 TH1D* hist = new TH1D(name.c_str(), name.c_str(), 130, 0, 130/2.56);
-                                TLengend* legend = new TLegend(0.7, 0, 0.9, 0.2);
+                                TLegend* legend = new TLegend(0.7, 0, 0.9, 0.2);
                                 gStyle->SetLegendBorderSize(0);
 
                                 cont = false;
