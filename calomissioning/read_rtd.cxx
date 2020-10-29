@@ -29,6 +29,15 @@
 #include <sncabling/service.h>
 #include <sncabling/calo_signal_cabling.h>
 
+typedef struct {
+    Int_t OM_ID, row, col, wall, ID;
+} EVENTN;
+
+typedef struct {
+    Int_t low_edge = 30;
+    Int_t high_edge = 100;
+    Int_t temp_length = 130;
+} TEMP_INFO;
 
 Double_t get_inner_product( std::vector<Double_t> &vec1, std::vector<Double_t> &vec2 );
 std::vector<std::vector<Double_t>> get_template_pulses( std::string template_file , Int_t n_temp );
@@ -37,22 +46,28 @@ Int_t get_peak_cell( std::vector<Double_t> &vec );
 void write_templates( std::vector<std::vector<Double_t>> &template_vectors );
 Double_t get_baseline( std::vector<Double_t> &vec );
 Int_t get_max_value( std::vector<Double_t> &vec );
+void draw_waveform( std::vector<Double_t> &vec, Int_t n_samples, Double_t baseline, EVENTN &eventn, std::string output_directory);
+void draw_pulse( std::vector<Double_t> &temp, std::vector<Double_t> &test, Int_t i, Double_t convo, Double_t sample_time, EVENTN &eventn);
+void save_hist( std::vector<Double_t> &vec, std::string x_label, std::string y_label, std::string title, std::string file_name, Int_t n_bins, Double_t min_bin, Double_t max_bin, TFile* root_file);
 
 bool debug = true;
 
 
-void usage(){
+void usage()
+{
+    std::clog<<std::endl;
+    std::clog<<"+--------------------------------------------------+"<<std::endl;
+    std::clog<<"| SuperNEMO calorimeter commissioning tutorial lv0 |"<<std::endl;
+    std::clog<<"+--------------------------------------------------+"<<std::endl;
 
-  std::clog<<std::endl;
-  std::clog<<"+--------------------------------------------------+"<<std::endl;
-  std::clog<<"| SuperNEMO calorimeter commissioning tutorial lv0 |"<<std::endl;
-  std::clog<<"+--------------------------------------------------+"<<std::endl;
-
-  std::clog<<"How to : "<<std::endl;
-  std::clog<<" "<<std::endl;
-  std::clog<<std::endl;
-
-
+    std::clog<<">>> How to use: "<<std::endl;
+    std::clog<<">>> -help "<<std::endl;
+    std::clog<<">>> -i  -  std::string /input/file/path/.gz "<<std::endl;
+    std::clog<<">>> -o  -  std::string /output/file/path/.root "<<std::endl;
+    std::clog<<">>> -t  -  BOOL create template, def:false "<<std::endl;
+    std::clog<<">>> -OM -  INT def: 1000 (no plots), chosen OM to plot examples "<<std::endl;
+    std::clog<<">>> -W  -  BOOL analyse waveforms def:false "<<std::endl;
+    std::clog<<std::endl;
 }
 
 // Main program
@@ -63,6 +78,9 @@ int main(int argc, char **argv)
     int error_code = EXIT_SUCCESS;
 
     std::string input_file_name, output_file_name;
+    bool do_template = false;
+    int chosen_OM = 1000;
+    bool do_waveforms = false;
 
     try {
     
@@ -85,6 +103,28 @@ int main(int argc, char **argv)
                 {
                     output_file_name = std::string(argv[i+1]);
                 }
+                else if ( s == "-t" )
+                {
+                    if ( std::string(argv[i+1]) == "true" )
+                    {
+                        do_template = true;
+                    }else{
+                        do_template = false;
+                    }
+                }
+                else if ( s == "-OM" )
+                {
+                    chosen_OM = std::stoi(argv[i+1]))
+                }
+                else if ( s == "-W" )
+                {
+                    if ( std::string(argv[i+1]) == "true" )
+                    {
+                        do_waveforms = true;
+                    }else{
+                        do_waveforms = false;
+                    }
+                }
 	        }
         }
     
@@ -96,19 +136,27 @@ int main(int argc, char **argv)
 
         std::clog<<"Input file name : "<<input_file_name<<std::endl;
 
-        //std::vector<Double_t> temp(130, 0.0);
-        //std::vector<std::vector<Double_t>> template_vectors(260, temp);
-        std::vector<std::vector<Double_t>> template_vectors = get_template_pulses( "templates.root", 260 );
-        //std::cout << "Initialise template vectors" << std::endl;
-        /*for (int j = 0; j < (Int_t)template_vectors.size(); ++j)
+        TEMP_INFO template_info;
+        std::vector<std::vector<Double_t>> template_vectors;
+        if ( do_template )
         {
-            std::cout << std::endl;
-            std::cout << "Template " << j << std::endl;
-            for (int i = 0; i < (Int_t)template_vectors[j].size(); ++i)
+            std::vector<Double_t> temp(template_info.temp_length, 0.0);
+            template_vectors(260, temp);
+
+            std::cout << "Initialise template vectors" << std::endl;
+            for (int j = 0; j < (Int_t)template_vectors.size(); ++j)
             {
-                std::cout << "( " << i << " , " << template_vectors[j][i] << " )" << std::endl;
+                std::cout << std::endl;
+                std::cout << "Template " << j << std::endl;
+                for (int i = 0; i < (Int_t)template_vectors[j].size(); ++i)
+                {
+                    std::cout << "( " << i << " , " << template_vectors[j][i] << " )" << std::endl;
+                }
             }
-        }*/
+
+        } else {
+            template_vectors = get_template_pulses( "templates.root", 260 );
+        }
 
         sncabling::service snCabling;
         snCabling.initialize_simple();
@@ -170,6 +218,8 @@ int main(int argc, char **argv)
 
         event_num = 0;
 
+        EVENTN eventn;
+
         std::size_t rtd_counter = 0;
         while ( rtd_source.has_record_tag() )
         {
@@ -193,7 +243,7 @@ int main(int argc, char **argv)
 	            uint64_t tdc             = calo_hit.get_tdc();        // TDC timestamp (48 bits)
 	            int32_t  crate_num       = calo_hit.get_crate_num();  // Crate number (0,1,2)
 	            int32_t  board_num       = calo_hit.get_board_num();  // Board number (0-19)
-	            if (board_num >= 10){ board_num++; }; // convert board_num  from [10-19] to [11-20]
+	            if (board_num >= 10){ board_num++; };                 // convert board_num  from [10-19] to [11-20]
 	            int32_t  chip_num        = calo_hit.get_chip_num();   // Chip number (0-7)
 	            auto     hit_num         = calo_hit.get_hit_num();
 
@@ -252,214 +302,80 @@ int main(int argc, char **argv)
                             wall_num = crate_num;
                             trig_id = trigger_id;
 
-		                    /*
-		                    if (column == 2)
-		                    {
-		                        if (row == 6)
-		                        {
-			                        std::string name = "M:1.2.6 Example Waveform HT == 0 " + std::to_string(event_num);
-			                        TH1I* ex_hist = new TH1I(name.c_str(), name.c_str(), 1024, 0, 400);
-			                        ex_hist->SetXTitle("Timestamp /ns");
-			                        ex_hist->SetYTitle("ADC counts /mV");
-			                        uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
-			                        for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
-			                        {
-			                            uint16_t adc = calo_hit.get_waveforms().get_adc(isample,ichannel);
-			                            ex_hist->SetBinContent(isample + 1, adc);
-			                        }
-			                        a_file.cd();
-			                        TCanvas* c1 = new TCanvas();
-			                        std::string canvas_name = "/sps/nemo/scratch/wquinn/PDFs/ev_" + std::to_string(event_num) + "_2_6.pdf";
-                                    c1->cd();
-                                    c1->SetGrid();
-                                    ex_hist->Draw();
-                                    gStyle->SetOptStat(0);
-                                    c1->SaveAs(canvas_name.c_str());
-                                    delete ex_hist;
-                                    delete c1;
+                            eventn.OM_ID = OM_ID;
+                            eventn.col = column;
+                            eventn.row = row;
+                            eventn.wall = crate_num;
+                            eventn.ID = event_num;
 
-		                        }
-		                        else if ( row == 7)
-		                        {
-			                        std::string name = "M:1.2.7 Example Waveform HT == 0 " + std::to_string(event_num);
-                                    TH1I* ex_hist = new TH1I(name.c_str(), name.c_str(), 1024, 0, 400);
-		                            ex_hist->SetXTitle("Timestamp /ns");
-			                        ex_hist->SetYTitle("ADC counts /mV");
-                                    uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
-                                    for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
-		                            {
-                                        uint16_t adc = calo_hit.get_waveforms().get_adc(isample,ichannel);
-                                        ex_hist->SetBinContent(isample + 1, adc);
-                                    }
-                                    a_file.cd();
-                                    TCanvas* c1 = new TCanvas();
-			                        std::string canvas_name = "/sps/nemo/scratch/wquinn/PDFs/ev_" + std::to_string(event_num) + "_2_7.pdf";
-                                    c1->cd();
-                                    c1->SetGrid();
-                                    ex_hist->Draw();
-                                    gStyle->SetOptStat(0);
-                                    c1->SaveAs(canvas_name.c_str());
-			                        delete ex_hist;
-		                            delete c1;
-		                        }
-		                    }
-		                    */
-		                    // Select a small charge range to add to template pulses
-		                    //std::cout << "OM_ID: " << OM_ID << " charge: " << charge << std::endl;
-                            /*if ( charge >= -25000 && ch_charge < -20000 )
+                            if (do_waveforms)
                             {
-                                std::vector<Double_t> temp_vector;
+                                if ( ch_peak_cell > 1024 - 160){ continue; }
+                                if ( chosen_OM == 1000 ){} else if ( OM_ID != chosen_OM ){ continue; }
+
                                 uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
+                                std::vector<Double_t> waveform_adc;
                                 for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
                                 {
                                     uint16_t adc = calo_hit.get_waveforms().get_adc(isample,ichannel);
-                                    temp_vector.push_back( (Double_t)adc - baseline);
-                                    //std::cout << isample << " : " << adc - baseline << std::endl;
+                                    waveform_adc.push_back((Double_t)adc);
                                 }
-                                update_temp_vector( template_vectors, temp_vector, OM_ID );
-                            }*/
+                                Double_t my_baseline = get_baseline( waveform_adc );
 
-                            if (OM_ID != 124){ continue; }
-
-                            if ( ch_peak_cell > 1024 - 160)
-                            {
-                                continue;
-                            }
-
-                            Int_t n_try = 50;
-                            std::vector<Double_t> mf_output;
-                            Double_t norm_temp = sqrt( get_inner_product( template_vectors[OM_ID], template_vectors[OM_ID] ) );
-
-                            uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
-
-                            TCanvas* waveform_canvas = new TCanvas();
-                            waveform_canvas->cd();
-                            gStyle->SetOptStat(0);
-                            TH1D* waveform_hist = new TH1D("waveform", "waveform", waveform_number_of_samples, 0, waveform_number_of_samples/2.56);
-                            std::vector<Double_t> waveform_adc;
-
-                            for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
-                            {
-                                uint16_t adc = calo_hit.get_waveforms().get_adc(isample,ichannel);
-                                waveform_adc.push_back(adc);
-                            }
-
-                            Double_t my_baseline = get_baseline( waveform_adc );
-
-                            for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
-                            {
-                                Double_t volts = (Double_t)waveform_adc[isample] - my_baseline;
-                                waveform_hist->SetBinContent(isample+1, volts/2.048);
-                            }
-
-                            waveform_hist->SetXTitle("Time stamp /ns");
-                            waveform_hist->SetYTitle("Voltage /mV");
-                            std::string w_title = "M:1:9:7 Waveform";
-                            waveform_hist->SetTitle(w_title.c_str());
-
-                            std::string can_name = "waveform.png";
-                            waveform_hist->Draw();
-                            waveform_canvas->SetGrid(true);
-                            waveform_canvas->Update();
-                            waveform_canvas->SaveAs(can_name.c_str());
-
-                            delete waveform_hist;
-                            delete waveform_canvas;
-
-                            std::string t_name = "template_" + std::to_string(OM_ID);
-                            TH1D* temp_hist = new TH1D(t_name.c_str(), t_name.c_str(), 130, 0, 130/2.56);
-                            temp_hist->SetLineColor(2);
-
-                            for (int k = 0; k < 130; ++k) {
-                                temp_hist->SetBinContent(k+1, template_vectors[OM_ID][k]);
-                            }
-
-                            for (int i = 0; i < n_try; ++i)
-                            {
-                                std::vector<Double_t> temp_vector;
-
-                                for (uint16_t isample = ch_peak_cell - 30 - n_try/2 + i; isample < ch_peak_cell + 100 - n_try/2 + i; isample++)
+                                if (do_template)
                                 {
-                                    //uint16_t adc = calo_hit.get_waveforms().get_adc(isample,ichannel);
-                                    Double_t volts = (Double_t)waveform_adc[isample] - my_baseline;
-                                    temp_vector.push_back( volts );
-                                    //std::cout << isample << " : " << adc - baseline << std::endl;
+                                    if ( charge >= -25000 && ch_charge < -20000 )
+                                    {
+                                        std::vector<Double_t> temp_vector;
+                                        for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
+                                        {
+                                            temp_vector.push_back( waveform_adc[isample] - baseline );
+                                        }
+                                        update_temp_vector( template_vectors, temp_vector, OM_ID );
+                                    }
+
+                                } else {
+                                    Int_t n_try = 50;
+                                    std::vector<Double_t> mf_output;
+                                    Double_t norm_temp = sqrt( get_inner_product( template_vectors[OM_ID], template_vectors[OM_ID] ) );
+
+                                    for (int i = 0; i < n_try; ++i)
+                                    {
+                                        std::vector<Double_t> temp_vector;
+
+                                        for (uint16_t isample = ch_peak_cell - 30 - n_try/2 + i; isample < ch_peak_cell + 100 - n_try/2 + i; isample++)
+                                        {
+                                            Double_t volts = (Double_t)waveform_adc[isample] - my_baseline;
+                                            temp_vector.push_back( volts );
+                                        }
+
+                                        Double_t norm_test = sqrt( get_inner_product( temp_vector, temp_vector ) );
+                                        Double_t mf = get_inner_product( temp_vector, template_vectors[OM_ID] )/( norm_temp * norm_test );
+
+                                        mf_output.push_back(mf);
+
+                                        if ( chosen_OM == 1000 ){} else if (OM_ID == chosen_OM)
+                                        {
+                                            draw_pulse(template_vectors[OM_ID], temp_vector, i, mf,
+                                                    (ch_peak_cell - 30 - n_try/2 + i)/2.56, eventn);
+                                        }
+                                    }
+                                    save_hist(mf_output,"Sample window time /ns","shape index","Pulse_time_finder",
+                                            "mf_output_" + std::to_string(OM_ID) + ".png",n_try,
+                                            (ch_peak_cell - 30 - n_try/2)/2.56 ,
+                                            (ch_peak_cell - 30 + n_try/2)/2.56), output_file;
+
+                                    if ( chosen_OM == 1000 ){} else if (OM_ID == chosen_OM)
+                                    {
+                                        draw_waveform(waveform_adc, waveform_number_of_samples, my_baseline, eventn);
+                                        return 1;
+                                    }
                                 }
 
-                                TCanvas* my_canvas = new TCanvas();
-                                my_canvas->cd();
+                                calo_time = get_max_value(mf_output) + ch_peak_cell - 30 - n_try/2;
+                                //waveform = temp_vector;
 
-                                gStyle->SetOptStat(0);
-                                std::string name = "hist_" + std::to_string(i);
-
-                                TH1D* hist = new TH1D(name.c_str(), name.c_str(), 130, 0, 130/2.56);
-                                hist->SetMaximum(10);
-                                hist->SetMinimum(-200);
-                                TLegend* legend = new TLegend(0.7, 0.1, 0.9, 0.2);
-                                //gStyle->SetLegendBorderSize(0);
-
-                                cont = false;
-                                for (int j = 1; j <= 130; ++j)
-                                {
-                                    hist->SetBinContent(j, temp_vector[j-1]/2.048);
-                                }
-                                temp_hist->Scale(hist->Integral()/temp_hist->Integral());
-                                temp_hist->Sumw2();
-
-
-                                Double_t norm_test = sqrt( get_inner_product( temp_vector, temp_vector ) );
-                                Double_t mf = get_inner_product( temp_vector, template_vectors[OM_ID] )/( norm_temp * norm_test );
-
-                                hist->SetLineColor(1);
-                                hist->SetXTitle("Relative time /ns");
-                                hist->SetYTitle("Voltage /mV");
-                                std::string title = "M:1:9:7 MF: " + std::to_string(mf) + " FBT:" + std::to_string((ch_peak_cell - 30 - n_try/2 + i)/2.56) + " ns";
-                                hist->SetTitle(title.c_str());
-
-                                std::string can_name = "mf_output_" + std::to_string(i) + ".png";
-                                hist->Draw("HIST");
-                                legend->AddEntry(hist, "test");
-                                legend->AddEntry(temp_hist, "template");
-                                my_canvas->SetGrid(true);
-                                temp_hist->Draw("HIST SAME C");
-                                legend->Draw();
-                                my_canvas->Update();
-                                my_canvas->SaveAs(can_name.c_str());
-
-                                delete hist;
-                                delete my_canvas;
-                                delete legend;
-
-                                mf_output.push_back(mf);
-                            }
-
-                            TCanvas* new_canvas = new TCanvas();
-                            new_canvas->cd();
-                            new_canvas->SetGrid(true);
-
-                            TH1D* new_hist = new TH1D("mf_output", "mf_output", n_try,
-                                                      (ch_peak_cell - 30 - n_try/2)/2.56 , (ch_peak_cell - 30 + n_try/2)/2.56);
-
-                            for (int k = 0; k < n_try; ++k) {
-                                new_hist->SetBinContent(k+1, mf_output[k]);
-                            }
-
-                            new_hist->SetXTitle("Waveform time /ns");
-                            new_hist->SetYTitle("mf shape  output /mV");
-                            new_hist->SetTitle("M:1.9.7 pulse start finder");
-
-                            gStyle->SetOptStat(0);
-                            new_hist->Draw("HIST");
-                            new_hist->Write();
-                            new_canvas->SaveAs("mf_output.png");
-
-                            if (cont) {} else { return 1; }
-
-
-                            calo_time = get_max_value(mf_output) + ch_peak_cell - 30 - n_try/2;
-
-                            //waveform = temp_vector;
-
+                            } else {}
                             tree.Fill();
                         }
 	                }
@@ -552,9 +468,6 @@ Double_t get_inner_product( std::vector<Double_t> &vec1, std::vector<Double_t> &
 }
 void update_temp_vector( std::vector<std::vector<Double_t>> &template_vectors, std::vector<Double_t> new_vector, Int_t OM_ID )
 {
-    //std::cout << std::endl;
-    //std::cout << "<<< update_temp_vector >>> " << std::endl;
-    //std::cout << "OM_ID: " << OM_ID << std::endl;
     Int_t temp_length = 130;
     Int_t peak_cell = get_peak_cell( new_vector );
 
@@ -574,14 +487,6 @@ void update_temp_vector( std::vector<std::vector<Double_t>> &template_vectors, s
             break;
         }
     }
-
-    //std::cout << std::endl;
-    //std::cout << "Template " << OM_ID << std::endl;
-    /*for (int i = 0; i < (Int_t)template_vectors[OM_ID].size(); ++i)
-    {
-        std::cout << "( " << i << " , " << template_vectors[OM_ID][i] << " )" << std::endl;
-    }*/
-
 }
 Int_t get_peak_cell( std::vector<Double_t> &vec )
 {
@@ -648,3 +553,113 @@ Int_t get_max_value( std::vector<Double_t> &vec )
     }
     return pos;
 }
+void draw_waveform( std::vector<Double_t> &vec, Int_t n_samples,
+        Double_t baseline, EVENTN &eventn, std::string output_directory)
+{
+    TCanvas* waveform_canvas = new TCanvas();
+    waveform_canvas->cd();
+    gStyle->SetOptStat(0);
+    TH1D* waveform_hist = new TH1D("waveform", "waveform", n_samples, 0, n_samples/2.56);
+
+    for (uint16_t i_sample = 0; i_sample < n_samples; i_sample++)
+    {
+        Double_t volts = waveform_adc[i_sample] - baseline;
+        waveform_hist->SetBinContent(i_sample+1, volts/2.048);
+    }
+
+    waveform_hist->SetXTitle("Time stamp /ns");
+    waveform_hist->SetYTitle("Voltage /mV");
+    std::string w_title = std::to_string(eventn.wall) + ":" + std::to_string(eventn.col) +
+                          ":" + std::to_string(eventn.row) + " Waveform";
+    waveform_hist->SetTitle(w_title.c_str());
+    std::string can_name = output_directory + "_" + std::to_string(eventn.ID) + "_" +
+                           std::to_string(eventn.wall) + "_" + std::to_string(eventn.col) +
+                           "_" + std::to_string(eventn.row) + "_waveform.png";
+
+    waveform_hist->Draw();
+    waveform_canvas->SetGrid(true);
+    waveform_canvas->Update();
+    waveform_canvas->SaveAs(can_name.c_str());
+
+    delete waveform_hist;
+    delete waveform_canvas;
+}
+void draw_pulse( std::vector<Double_t> &temp, std::vector<Double_t> &test, Int_t i,
+        Double_t convo, Double_t sample_time, EVENTN &eventn)
+{
+    TCanvas* my_canvas = new TCanvas();
+    my_canvas->cd();
+
+    gStyle->SetOptStat(0);
+    std::string test_name = "test_hist_" + std::to_string(i);
+    std::string temp_name = "temp_hist_" + std::to_string(eventn.OM_ID);
+
+    TH1D* test_hist = new TH1D(test_name.c_str(), test_name.c_str(), (Int_t)test.size(), 0, (Double_t)test.size()/2.56);
+    TH1D* temp_hist = new TH1D(name.c_str(), name.c_str(), (Int_t)test.size(), 0, (Double_t)test.size()/2.56);
+    test_hist->SetMaximum(10);
+    test_hist->SetMinimum(test_hist->GetMinimum() - 50);
+
+    TLegend* legend = new TLegend(0.7, 0.1, 0.9, 0.2);
+    //gStyle->SetLegendBorderSize(0);
+    for (int j = 1; j <= (Int_t)test.size(); ++j)
+    {
+        test_hist->SetBinContent(j, test[j-1]/2.048);
+    }
+    for (int k = 1; k <= (Int_t)temp.size(); ++k)
+    {
+        temp_hist->SetBinContent(k, temp[k-1])
+    }
+
+    temp_hist->Scale(test_hist->Integral()/temp_hist->Integral());
+    temp_hist->Sumw2();
+
+    temp_hist->SetLineColor(2);
+    test_hist->SetLineColor(1);
+
+    test_hist->SetXTitle("Relative time /ns");
+    test_hist->SetYTitle("Voltage /mV");
+    std::string title = std::to_string(eventn.wall) + ":" + std::to_string(eventn.col) + ":" + std::to_string(eventn.row)
+            + " MF: " + std::to_string(convo) + " FBT:" + std::to_string(sample_time) + " ns";
+    test_hist->SetTitle(title.c_str());
+
+    std::string can_name = "mf_output_" + std::to_string(eventn.wall) + "_" + std::to_string(eventn.col) + "_" +
+            std::to_string(eventn.row) + "_N" std::to_string(i) + ".png";
+    test_hist->Draw("HIST");
+    temp_hist->Draw("HIST SAME C");
+    legend->AddEntry(test_hist, "test");
+    legend->AddEntry(temp_hist, "template");
+    legend->Draw();
+    my_canvas->SetGrid(true);
+    my_canvas->Update();
+    my_canvas->SaveAs(can_name.c_str());
+
+    delete test_hist;
+    delete temp_hist
+    delete my_canvas;
+    delete legend;
+}
+void save_hist( std::vector<Double_t> &vec, std::string x_label, std::string y_label, std::string title,
+        std::string file_name, Int_t n_bins, Double_t min_bin, Double_t max_bin, TFile* root_file)
+{
+    TCanvas* new_canvas = new TCanvas();
+    new_canvas->cd();
+    new_canvas->SetGrid(true);
+
+    TH1D* new_hist = new TH1D(title.c_str(), title.c_str(), n_bins, min_bin, max_bin);
+
+    for (int k = 0; k < n_try; ++k) {
+        new_hist->SetBinContent(k+1, vec[k]);
+    }
+
+    new_hist->SetXTitle(x_label.c_str());
+    new_hist->SetYTitle(y_label.c_str());
+    new_hist->SetTitle(title.c_str());
+
+    gStyle->SetOptStat(0);
+    new_hist->Draw("HIST");
+    new_hist->Write();
+    new_canvas->SaveAs(file_name.c_str());
+
+    delete new_canvas;
+}
+
