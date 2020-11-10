@@ -1,4 +1,4 @@
-# PMT_Analysis
+# PMT-ShapeAnalysis
 
 Set Up
 ------
@@ -59,11 +59,11 @@ For those with access to the HEP cluster at UCL you can use pc204 or pc202 as bo
 
 I would recommend familiarising oneself with test.py as this file give a crash course in how to use some features of the class structure.
 
-The main structure of this repo is as follows:
+TMany of the projects in this repository revolve around understanding the  shape of PMT pulses. I have created, though not necessarily utilised fully, three object classes to clean up some of the code. Also helps with reusability.
 
 PMT_Object.py
 -------------
-Class for each PMT that will hold settings and result histograms. To set up you need to give it a unique name.
+Class for each PMT that will hold settings and some preliminary result histograms. To set up you need to give it a unique name. Only add to these histograms or settings if you know you will utilise them regularly.
 
 This has a set of default settings:
 
@@ -79,9 +79,13 @@ This has a set of default settings:
         - resistance = 50 # Ohms
         - mf_shape_threshold = 0.9
         - mf_amp_threshold = 25
+        - baseline = 1000
         - waveform_length = 8000
+        - trigger_point = 100
+        - integration = [0.3, 0.3]
+        - he_region = [1400, 2000]
 
-The names of these settings are very important. use the get/set_setting("name"/"name", value) to access or change. 
+The names of these settings are very important. use the get_setting("name") or set_setting("name", value) to access or change. 
 
 The default histograms that are created are:
 
@@ -98,7 +102,7 @@ The default histograms that are created are:
     
 These names are also important. They all have the ranges and number of bins defined in the setting above. See the set_up_histograms function in PMT_Object.py for more details.
 
-These histograms can be access by member function or by get_histogram("name") function. To fill you  can do either as well.
+These histograms can be access by member function or by get_histogram("name") function. To fill you can do either as well.
 
 PMT_Waveform.py
 ---------------
@@ -106,9 +110,9 @@ Feed a list of strings, and a PMT_Object, and it will convert that list of strin
 
 Requires you to pass it a PMT_Object.
 
-First it checks the charge of the pmt pulse which it finds automatically. At the moment it defines a fixed window for integration but in the future this window will very depending on the size of the pulse. It then checks the PMT_Object settings for a charge cut. By default, even after applying a setting file [see later in PMT_Array], the charge cut is the only trigger cut. If the charge of the pulse is bigger than the cut value the pmt waveform will trigger to True. This boolean can be used as a descriminator to fill the results of the analysis into the PMT_Object. This avoids null waveforms for example/ empty waveforms.
+First it checks the charge of the pmt pulse which it finds automatically using the integration settings. It then checks the PMT_Object settings for a charge cut. By default, even after applying a setting file [see later in PMT_Array], the charge cut is the only trigger cut. If the charge of the pulse is bigger than the cut value the pmt waveform will trigger to True. This boolean can be used as a descriminator to fill the results of the analysis into the PMT_Object. This avoids null waveforms for example/ empty waveforms.
 
-The reusults it calculates by default are:
+The results it calculates by default are:
 
             "pulse_charge"      : 0.0,
             "pulse_amplitude"   : 0.0,
