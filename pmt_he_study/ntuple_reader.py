@@ -12,6 +12,8 @@ import numpy as np
 from functions.other_functions import pmt_parse_arguments
 from src.PMT_Array import PMT_Array
 
+from datetime import datetime
+
 
 def print_settings(pmt_array: PMT_Array):
     pass
@@ -79,9 +81,12 @@ def read_tree(root_file_name: str, pmt_array: PMT_Array, output_file_location: s
         apulse_amplitudes_hists.append(apulse_amplitude)
         he_apulse_amplitudes_hists.append(he_apulse_amplitude)
 
-    for event in tree:
+    output_file = ROOT.TFile(output_file_location + "/ROOT_files/" + str(voltage) + "V/" + output_file_name, "RECREATE")
+    output_file.cd()
 
+    for event in tree:
         # Access the information inside the NTuple
+
         OM_ID = event.OM_ID
         if OM_ID == 0 or OM_ID == 1:
             pass
@@ -92,9 +97,9 @@ def read_tree(root_file_name: str, pmt_array: PMT_Array, output_file_location: s
         pulse_charge = event.pulse_charge
         pulse_baseline = event.pulse_baseline
         apulse_num = event.apulse_num
-        apulse_times = np.array(event.apulse_times)
-        apulse_amplitudes = np.array(event.apulse_amplitudes)
-        apulse_shapes = np.array(event.apulse_shapes)
+        apulse_times = event.apulse_times
+        apulse_amplitudes = event.apulse_amplitudes
+        apulse_shapes = event.apulse_shapes
 
         charge_hists[OM_ID].Fill(pulse_charge)
         amp_hists[OM_ID].Fill(pulse_amplitude)
@@ -105,6 +110,7 @@ def read_tree(root_file_name: str, pmt_array: PMT_Array, output_file_location: s
         he_new_apulse_num = 0
         filer_list = []
         he_filter_list = []
+
         try:
             for i_apulse in range(apulse_num):
                 if apulse_shapes[i_apulse] > pmt_array.get_pmt_object_number(OM_ID).get_setting("mf_shape_threshold")\
@@ -128,11 +134,9 @@ def read_tree(root_file_name: str, pmt_array: PMT_Array, output_file_location: s
         except:
             pass
 
-    output_file = ROOT.TFile(output_file_location + "/ROOT_files/" + str(voltage) + "V/" + output_file_name, "RECREATE")
-    output_file.cd()
-
     for i_om in range(pmt_array.get_pmt_total_number()):
         if charge_hists[i_om].GetEntries() > 0:
+            output_file.cd()
             charge_hists[i_om].Write()
             amp_hists[i_om].Write()
             baselines[i_om].Write()

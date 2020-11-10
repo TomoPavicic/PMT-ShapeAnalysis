@@ -222,7 +222,7 @@ def main():
         plt.ylabel("Afterpulse rate /%")
         plt.title(pmt_array.get_pmt_object_number(i_om).get_pmt_id() + " afterpulse rate vs exposure time")
         plt.grid()
-        plt.ylim(10,70)
+        plt.ylim(10,90)
         plt.legend(loc='upper left')
         plt.savefig(output_directory + "/summary_plots/" +
                     pmt_array.get_pmt_object_number(i_om).get_pmt_id() + "_apulse_rate_vs_time")

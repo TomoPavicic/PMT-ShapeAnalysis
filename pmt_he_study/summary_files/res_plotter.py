@@ -97,7 +97,7 @@ def read_file(date: str, voltage: int, root_file_name: str, pmt_array: PMT_Array
         bi_fit.SetParLimits(4, 0.001, 0.1)
         bi_fit.SetParLimits(5, mu_guess - 6, mu_guess)
         bi_fit.SetParLimits(6, 1, 3)
-        bi_fit.SetParameters(100, mu_guess, 1, 400, 0.5, mu_guess - 2, 2)
+        bi_fit.SetParameters(100, mu_guess, 1, 400, 0.05, mu_guess - 2, 2)
 
         name = output_file_location + "/plots/" + date + "_" + pmt_array.get_pmt_object_number(
             i_om).get_pmt_id() + "_charge_spectrum_fit.pdf"
@@ -260,7 +260,7 @@ def main():
         plt.ylim(150, 300)
         plt.legend(loc='lower right')
         plt.savefig(output_directory + "/summary_plots/" +
-                    pmt_array.get_pmt_object_number(i_om).get_pmt_id() + "_gains_vs_time")
+                    pmt_array.get_pmt_object_number(i_om).get_pmt_id() + "_gains_vs_time.png")
         plt.close()
 
         plt.errorbar(date, baseline_means[i_om], yerr=baseline_sigs[i_om], fmt='k.-', ecolor='r')
@@ -269,7 +269,7 @@ def main():
         plt.ylabel("Baseline mean /mV")
         plt.title(pmt_array.get_pmt_object_number(i_om).get_pmt_id() + " Baseline mean vs exposure time")
         plt.savefig(output_directory + "/summary_plots/" +
-                    pmt_array.get_pmt_object_number(i_om).get_pmt_id() + "_baseline_mean_vs_time")
+                    pmt_array.get_pmt_object_number(i_om).get_pmt_id() + "_baseline_mean_vs_time.png")
 
         plt.close()
 
@@ -321,7 +321,7 @@ def main():
         plt.legend(loc='upper right')
         plt.tight_layout()
         plt.savefig(output_directory + "/summary_plots/" + pmt_array.get_pmt_object_number(i_om).get_pmt_id() +
-                    "_resolution_vs_time")
+                    "_resolution_vs_time.png")
         plt.close()
 
         plt.plot(np.array(date[start:])[res_filter[start:]], np.array(fit_chi2[i_om][start:])[res_filter[start:]],
@@ -340,7 +340,7 @@ def main():
         plt.ylim(0, 10)
         plt.tight_layout()
         plt.savefig(output_directory + "/summary_plots/" + pmt_array.get_pmt_object_number(i_om).get_pmt_id() +
-                    "_resolution_vs_time_chi2")
+                    "_resolution_vs_time_chi2.png")
         plt.close()
 
     # Plot ratio
@@ -382,7 +382,7 @@ def main():
     plt.grid()
     plt.xlim(np.amin(np.array(x_date)), np.amax(np.array(x_date)))
     plt.ylim(0, 2)
-    plt.savefig(output_directory + "/summary_plots/resolution_ratio_vs_time")
+    plt.savefig(output_directory + "/summary_plots/resolution_ratio_vs_time.png")
     plt.close()
 
     plt.plot(x_date, gain_ratio, "k.")
@@ -394,8 +394,10 @@ def main():
     plt.grid()
     plt.xlim(np.amin(np.array(x_date)), np.amax(np.array(x_date)))
     plt.ylim(0.7, 1)
-    plt.savefig(output_directory + "/summary_plots/gain_ratio_vs_time")
+    plt.savefig(output_directory + "/summary_plots/gain_ratio_vs_time.png")
     plt.close()
+
+    print("<<<< FINISHED >>>")
 
 
 if __name__ == '__main__':

@@ -129,7 +129,7 @@ def main():
                 plt.grid()
                 #plt.yscale('log')
                 plt.show(block=False)
-                plt.pause(0.01)
+                plt.pause(0.001)
                 plt.close()
 
             last_temp[i_channel][week_num] += 100 * np.array(temp)/hist.GetEntries()
@@ -182,7 +182,7 @@ def main():
         plt.legend(loc="upper right")
         plt.grid()
         plt.show(block=False)
-        plt.pause(0.1)
+        plt.pause(0.01)
         plt.close()
     #plt.rcParams["figure.figsize"] = (20, 20)'''
     '''for i_bin in range(1,len(apulse_num_y[0])):
