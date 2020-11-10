@@ -360,10 +360,10 @@ int main(int argc, char **argv)
                                                     (ch_peak_cell - 30 - n_try/2 + i)/2.56, eventn);
                                         }
                                     }
-                                    save_hist(mf_output,"Sample window time /ns","shape index","Pulse_time_finder",
+                                    /*save_hist(mf_output,"Sample window time /ns","shape index","Pulse_time_finder",
                                             "mf_output_" + std::to_string(OM_ID) + ".png",n_try,
                                             (ch_peak_cell - 30 - n_try/2)/2.56 ,
-                                            (ch_peak_cell - 30 + n_try/2)/2.56), output_file;
+                                            (ch_peak_cell - 30 + n_try/2)/2.56), output_file;*/
 
                                     if ( chosen_OM == 1000 ){} else if (OM_ID == chosen_OM)
                                     {
@@ -611,7 +611,7 @@ void draw_pulse( std::vector<Double_t> &temp, std::vector<Double_t> &test, Int_t
     }
 
     temp_hist->Scale(test_hist->Integral()/temp_hist->Integral());
-    temp_hist->Sumw2();
+    //temp_hist->Sumw2();
 
     temp_hist->SetLineColor(2);
     test_hist->SetLineColor(1);
