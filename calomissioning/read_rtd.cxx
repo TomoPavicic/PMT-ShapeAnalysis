@@ -311,7 +311,7 @@ int main(int argc, char **argv)
                             eventn.wall = crate_num;
                             eventn.ID = event_num;
 
-                            calo_time = -1000.0
+                            calo_time = -1000.0;
 
                             if (do_waveforms)
                             {
