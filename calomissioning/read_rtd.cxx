@@ -140,8 +140,11 @@ int main(int argc, char **argv)
         std::vector<std::vector<Double_t>> template_vectors;
         if ( do_template )
         {
-            std::vector<Double_t> temp(template_info.temp_length, 0.0);
-            template_vectors(260, temp);
+            for (int k = 0; k < ; ++k)
+            {
+                std::vector<Double_t> temp(template_info.temp_length, 0.0);
+                template_vectors.push_back(temp);
+            }
 
             std::cout << "Initialise template vectors" << std::endl;
             for (int j = 0; j < (Int_t)template_vectors.size(); ++j)
