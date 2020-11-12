@@ -612,7 +612,7 @@ void draw_pulse( std::vector<Double_t> &temp, std::vector<Double_t> &test, Int_t
     }
     for (int k = 1; k <= (Int_t)temp.size(); ++k)
     {
-        temp_hist->SetBinContent(k, temp[k-1])
+        temp_hist->SetBinContent(k, temp[k-1]);
     }
 
     temp_hist->Scale(test_hist->Integral()/temp_hist->Integral());
