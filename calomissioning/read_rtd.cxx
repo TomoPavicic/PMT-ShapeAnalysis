@@ -114,7 +114,7 @@ int main(int argc, char **argv)
                 }
                 else if ( s == "-OM" )
                 {
-                    chosen_OM = std::stoi(argv[i+1]))
+                    chosen_OM = std::stoi(argv[i+1]));
                 }
                 else if ( s == "-W" )
                 {
