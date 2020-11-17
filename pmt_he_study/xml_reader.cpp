@@ -68,7 +68,7 @@ typedef struct {
 } MATCHFILTER;
 
 typedef struct {
-    Int_t sweep_start, pre_trigger, trigger, trig_tolerance;
+    Int_t sweep_start, pre_trigger, trigger, trig_tolerance, apulse_time_cut;
     Double_t shape_cut, amp_cut, charge_cut, resistance;
     std::vector<Double_t> integration;
     std::string template_file;
@@ -150,6 +150,7 @@ Int_t main(Int_t argc, char* argv[])
     std::cout << ">>> Low/High edge     : " << config_object.integration[0] << "/" << config_object.integration[1] << std::endl;
     std::cout << ">>> Sweep start       : " << config_object.sweep_start << std::endl;
     std::cout << ">>> Resistance        : " << config_object.resistance << std::endl;
+    std::cout << ">>> Time cut          : " << config_object.apulse_time_cut << std::endl;
     std::cout << ">>> Template file     : " << config_object.template_file << std::endl;
 
     description.template_file = config_object.template_file;
@@ -427,7 +428,8 @@ CONF read_config( std::string filename )
             else if ( settings[0] == "trigger" ) { config.trigger = std::stod(settings[1]); }
             else if ( settings[0] == "trig_tolerance" ) { config.trig_tolerance = std::stod(settings[1]); }
             else if ( settings[0] == "resistance" ) { config.resistance = std::stod(settings[1]); }
-	    else if ( settings[0] == "temp_file" ) { config.template_file = settings[1]; }
+            else if ( settings[0] == "apulse_time_cut" ) { config.apulse_time_cut = std::stod(settings[1]); }
+	        else if ( settings[0] == "temp_file" ) { config.template_file = settings[1]; }
             else { continue; }
         }
     }
@@ -486,6 +488,7 @@ MATCHFILTER sweep( std::vector<Double_t> &vec, CONF &config, Double_t baseline, 
     Int_t time_cut = config.sweep_start;
     Double_t shape_cut = config.shape_cut;
     Double_t amp_cut = config.amp_cut;
+    Int_t apulse_time_cut = config.apulse_time_cut;
 
     // Create containers for the output amplitude and times of afterpulses after applying cuts
     std::vector<Double_t> apulse_amp_vec;
@@ -535,8 +538,8 @@ MATCHFILTER sweep( std::vector<Double_t> &vec, CONF &config, Double_t baseline, 
             {
                 Int_t distance_to_nearest_afterpulse = i_sweep - previous_apulse;
 
-                // Check whether still on same afterpulse by defining a 2*template length temporal distance
-                if (distance_to_nearest_afterpulse > (Int_t)temp.size())
+                // Check whether still on same afterpulse using the afterpulse time cut
+                if (distance_to_nearest_afterpulse > apulse_time_cut)
                 {
                     // This is a new afterpulse:
                     apulse_amp_vec.push_back( amplitude_index );
