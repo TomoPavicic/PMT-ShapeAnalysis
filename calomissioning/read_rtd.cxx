@@ -114,7 +114,7 @@ int main(int argc, char **argv)
                 }
                 else if ( s == "-OM" )
                 {
-                    chosen_OM = std::stoi(argv[i+1]))
+                    chosen_OM = std::stoi(argv[i+1]);
                 }
                 else if ( s == "-W" )
                 {
@@ -140,8 +140,11 @@ int main(int argc, char **argv)
         std::vector<std::vector<Double_t>> template_vectors;
         if ( do_template )
         {
-            std::vector<Double_t> temp(template_info.temp_length, 0.0);
-            template_vectors(260, temp);
+            for (int k = 0; k < 260; ++k)
+            {
+                std::vector<Double_t> temp(template_info.temp_length, 0.0);
+                template_vectors.push_back(temp);
+            }
 
             std::cout << "Initialise template vectors" << std::endl;
             for (int j = 0; j < (Int_t)template_vectors.size(); ++j)
@@ -308,6 +311,8 @@ int main(int argc, char **argv)
                             eventn.wall = crate_num;
                             eventn.ID = event_num;
 
+                            calo_time = -1000.0;
+
                             if (do_waveforms)
                             {
                                 if ( ch_peak_cell > 1024 - 160){ continue; }
@@ -363,16 +368,20 @@ int main(int argc, char **argv)
                                     /*save_hist(mf_output,"Sample window time /ns","shape index","Pulse_time_finder",
                                             "mf_output_" + std::to_string(OM_ID) + ".png",n_try,
                                             (ch_peak_cell - 30 - n_try/2)/2.56 ,
+<<<<<<< HEAD
                                             (ch_peak_cell - 30 + n_try/2)/2.56), output_file;*/
+=======
+                                            (ch_peak_cell - 30 + n_try/2)/2.56, output_file);*/
+>>>>>>> willq
 
                                     if ( chosen_OM == 1000 ){} else if (OM_ID == chosen_OM)
                                     {
-                                        draw_waveform(waveform_adc, waveform_number_of_samples, my_baseline, eventn);
+                                        draw_waveform(waveform_adc, waveform_number_of_samples, my_baseline, eventn, output_file_name);
                                         return 1;
                                     }
-                                }
 
-                                calo_time = get_max_value(mf_output) + ch_peak_cell - 30 - n_try/2;
+                                    calo_time = get_max_value(mf_output) + ch_peak_cell - 30 - n_try/2;
+                                }
                                 //waveform = temp_vector;
 
                             } else {}
@@ -563,7 +572,7 @@ void draw_waveform( std::vector<Double_t> &vec, Int_t n_samples,
 
     for (uint16_t i_sample = 0; i_sample < n_samples; i_sample++)
     {
-        Double_t volts = waveform_adc[i_sample] - baseline;
+        Double_t volts = vec[i_sample] - baseline;
         waveform_hist->SetBinContent(i_sample+1, volts/2.048);
     }
 
@@ -595,7 +604,7 @@ void draw_pulse( std::vector<Double_t> &temp, std::vector<Double_t> &test, Int_t
     std::string temp_name = "temp_hist_" + std::to_string(eventn.OM_ID);
 
     TH1D* test_hist = new TH1D(test_name.c_str(), test_name.c_str(), (Int_t)test.size(), 0, (Double_t)test.size()/2.56);
-    TH1D* temp_hist = new TH1D(name.c_str(), name.c_str(), (Int_t)test.size(), 0, (Double_t)test.size()/2.56);
+    TH1D* temp_hist = new TH1D(temp_name.c_str(), temp_name.c_str(), (Int_t)test.size(), 0, (Double_t)test.size()/2.56);
     test_hist->SetMaximum(10);
     test_hist->SetMinimum(test_hist->GetMinimum() - 50);
 
@@ -607,7 +616,7 @@ void draw_pulse( std::vector<Double_t> &temp, std::vector<Double_t> &test, Int_t
     }
     for (int k = 1; k <= (Int_t)temp.size(); ++k)
     {
-        temp_hist->SetBinContent(k, temp[k-1])
+        temp_hist->SetBinContent(k, temp[k-1]);
     }
 
     temp_hist->Scale(test_hist->Integral()/temp_hist->Integral());
@@ -623,7 +632,7 @@ void draw_pulse( std::vector<Double_t> &temp, std::vector<Double_t> &test, Int_t
     test_hist->SetTitle(title.c_str());
 
     std::string can_name = "mf_output_" + std::to_string(eventn.wall) + "_" + std::to_string(eventn.col) + "_" +
-            std::to_string(eventn.row) + "_N" std::to_string(i) + ".png";
+            std::to_string(eventn.row) + "_N" + std::to_string(i) + ".png";
     test_hist->Draw("HIST");
     temp_hist->Draw("HIST SAME C");
     legend->AddEntry(test_hist, "test");
@@ -634,7 +643,7 @@ void draw_pulse( std::vector<Double_t> &temp, std::vector<Double_t> &test, Int_t
     my_canvas->SaveAs(can_name.c_str());
 
     delete test_hist;
-    delete temp_hist
+    delete temp_hist;
     delete my_canvas;
     delete legend;
 }
@@ -647,7 +656,7 @@ void save_hist( std::vector<Double_t> &vec, std::string x_label, std::string y_l
 
     TH1D* new_hist = new TH1D(title.c_str(), title.c_str(), n_bins, min_bin, max_bin);
 
-    for (int k = 0; k < n_try; ++k) {
+    for (int k = 0; k < vec.size(); ++k) {
         new_hist->SetBinContent(k+1, vec[k]);
     }
 
