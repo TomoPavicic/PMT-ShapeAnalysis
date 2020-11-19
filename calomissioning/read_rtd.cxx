@@ -179,7 +179,7 @@ int main(int argc, char **argv)
         Double_t rise_time;
         Double_t peak_time;
         Int_t calo_hit_num;
-        int64_t calo_tdc;
+        unsigned long long calo_tdc;
         Int_t run_num;
         Int_t wall_num;
         Int_t trig_id;
