@@ -246,7 +246,7 @@ int main(int argc, char **argv)
 	            uint64_t tdc             = calo_hit.get_tdc();        // TDC timestamp (48 bits)
 	            int32_t  crate_num       = calo_hit.get_crate_num();  // Crate number (0,1,2)
 	            int32_t  board_num       = calo_hit.get_board_num();  // Board number (0-19)
-	            if (board_num >= 10){ board_num++; };                 // convert board_num  from [10-19] to [11-20]
+	            //if (board_num >= 10){ board_num++; };                 // convert board_num  from [10-19] to [11-20]
 	            int32_t  chip_num        = calo_hit.get_chip_num();   // Chip number (0-7)
 	            auto     hit_num         = calo_hit.get_hit_num();
 
