@@ -140,7 +140,7 @@ def main():
 
     h_map = ROOT.TH2I("event_map", "event_map", topology[1], 0, topology[1], topology[0], 0, topology[0])
     
-    create_log("run_167_output.txt")
+    create_log("output.txt")
 
     x = []
 
