@@ -378,8 +378,10 @@ int main(int argc, char **argv)
                                         return 1;
                                     }
 
-                                    calo_time = get_pulse_time_mf(mf_output) + ch_peak_cell - 30 - n_try/2;
-
+                                    if (mf_output.size() > 0)
+                                    {
+                                        calo_time = get_pulse_time_mf(mf_output) + ch_peak_cell - 30 - n_try / 2;
+                                    }
                                     //calo_time = get_max_value(mf_output) + ch_peak_cell - 30 - n_try/2;
                                 }
                                 //waveform = temp_vector;
