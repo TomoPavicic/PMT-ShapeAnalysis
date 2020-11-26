@@ -684,6 +684,8 @@ Double_t get_pulse_time_mf(std::vector<Double_t> &vec)
     {
         hist->SetBinContent(i+1, vec[lower_bound + i]);
     }
+    std::cout << "low: " << lower_bound << std::endl;
+    std::cout << "hig: " << upper_bound << std::endl;
     std::cout << "NBins: " << hist->GetNbinsX() << std::endl;
 
     TF1 fit("fit","[0]*TMath::Gaus(x,[1],[2])",lower_bound,upper_bound);
