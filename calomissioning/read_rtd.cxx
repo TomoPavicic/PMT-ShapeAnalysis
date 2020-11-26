@@ -342,7 +342,7 @@ int main(int argc, char **argv)
                                     }
 
                                 } else {
-                                    Int_t n_try = 50;
+                                    Int_t n_try = 60;
                                     std::vector<Double_t> mf_output;
                                     Double_t norm_temp = sqrt( get_inner_product( template_vectors[OM_ID], template_vectors[OM_ID] ) );
 
@@ -678,15 +678,15 @@ Double_t get_pulse_time_mf(std::vector<Double_t> &vec)
     Int_t guess_mean = get_max_value(vec);
     Int_t lower_bound = guess_mean-5;
     Int_t upper_bound = guess_mean+5;
-    TH1D* hist = new TH1D("h","h",lower_bound+upper_bound, lower_bound, upper_bound);
+    TH1D* hist = new TH1D("h","h",upper_bound-lower_bound, lower_bound, upper_bound);
 
     for (int i = 0; i < hist->GetNbinsX(); ++i)
     {
         hist->SetBinContent(i+1, vec[lower_bound + i]);
     }
-    std::cout << "low: " << lower_bound << std::endl;
+    /* std::cout << "low: " << lower_bound << std::endl;
     std::cout << "hig: " << upper_bound << std::endl;
-    std::cout << "NBins: " << hist->GetNbinsX() << std::endl;
+    std::cout << "NBins: " << hist->GetNbinsX() << std::endl; */
 
     TF1 fit("fit","[0]*TMath::Gaus(x,[1],[2])",lower_bound,upper_bound);
     fit.SetParNames("A","mu","sigma");
