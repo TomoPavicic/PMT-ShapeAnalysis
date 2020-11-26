@@ -50,7 +50,7 @@ Int_t get_max_value( std::vector<Double_t> &vec );
 void draw_waveform( std::vector<Double_t> &vec, Int_t n_samples, Double_t baseline, EVENTN &eventn, std::string output_directory);
 void draw_pulse( std::vector<Double_t> &temp, std::vector<Double_t> &test, Int_t i, Double_t convo, Double_t sample_time, EVENTN &eventn);
 void save_hist( std::vector<Double_t> &vec, std::string x_label, std::string y_label, std::string title, std::string file_name, Int_t n_bins, Double_t min_bin, Double_t max_bin, TFile* root_file);
-Double_t get_pulse_time_mf(std::vector<Double_t> &vec)
+Double_t get_pulse_time_mf(std::vector<Double_t> &vec);
 
 bool debug = true;
 
