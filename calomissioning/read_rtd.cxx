@@ -380,7 +380,7 @@ int main(int argc, char **argv)
 
                                     if (mf_output.size() > 0)
                                     {
-                                        calo_time = get_pulse_time_mf(mf_output) + ch_peak_cell - 30 - n_try / 2;
+                                        calo_time = get_pulse_time_mf(mf_output) + (Double_t)ch_peak_cell - 30.0 - (Double_t)n_try / 2.0;
                                     }
                                     //calo_time = get_max_value(mf_output) + ch_peak_cell - 30 - n_try/2;
                                 }
@@ -675,7 +675,7 @@ void save_hist( std::vector<Double_t> &vec, std::string x_label, std::string y_l
 }
 Double_t get_pulse_time_mf(std::vector<Double_t> &vec)
 {
-    Double_t guess_mean = get_max_value(vec);
+    Int_t guess_mean = get_max_value(vec);
     Int_t lower_bound = guess_mean-5;
     Int_t upper_bound = guess_mean+5;
     TH1D* hist = new TH1D("h","h",lower_bound+upper_bound, lower_bound, upper_bound);
