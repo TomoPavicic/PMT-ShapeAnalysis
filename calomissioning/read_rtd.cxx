@@ -678,6 +678,11 @@ Double_t get_pulse_time_mf(std::vector<Double_t> &vec)
     Int_t upper_bound = guess_mean+5;
     TH1D* hist = new TH1D("h","h",lower_bound+upper_bound, lower_bound, upper_bound);
 
+    for (int i = 0; i < hist->GetNbinsX(); ++i)
+    {
+        hist->SetBinContent(i+1, vec[lower_bound + i]);
+    }
+
     TF1 fit("fit","[0]*TMath::Gaus(x,[1],[2])",lower_bound,upper_bound);
     fit.SetParNames("A","mu","sigma");
 
