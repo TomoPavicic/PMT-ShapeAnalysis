@@ -12,6 +12,7 @@
 #include "TCanvas.h"
 #include "TStyle.h"
 #include "TLegend.h"
+#include "TF1.h"
 
 
 #include <snfee/snfee.h>
@@ -49,6 +50,7 @@ Int_t get_max_value( std::vector<Double_t> &vec );
 void draw_waveform( std::vector<Double_t> &vec, Int_t n_samples, Double_t baseline, EVENTN &eventn, std::string output_directory);
 void draw_pulse( std::vector<Double_t> &temp, std::vector<Double_t> &test, Int_t i, Double_t convo, Double_t sample_time, EVENTN &eventn);
 void save_hist( std::vector<Double_t> &vec, std::string x_label, std::string y_label, std::string title, std::string file_name, Int_t n_bins, Double_t min_bin, Double_t max_bin, TFile* root_file);
+Double_t get_pulse_time_mf(std::vector<Double_t> &vec)
 
 bool debug = true;
 
@@ -376,7 +378,9 @@ int main(int argc, char **argv)
                                         return 1;
                                     }
 
-                                    calo_time = get_max_value(mf_output) + ch_peak_cell - 30 - n_try/2;
+                                    calo_time = get_pulse_time_mf(mf_output) + ch_peak_cell - 30 - n_try/2;
+
+                                    //calo_time = get_max_value(mf_output) + ch_peak_cell - 30 - n_try/2;
                                 }
                                 //waveform = temp_vector;
 
@@ -666,5 +670,33 @@ void save_hist( std::vector<Double_t> &vec, std::string x_label, std::string y_l
     new_canvas->SaveAs(file_name.c_str());
 
     delete new_canvas;
+}
+Double_t get_pulse_time_mf(std::vector<Double_t> &vec)
+{
+    Double_t guess_mean = get_max_value(vec);
+    Int_t lower_bound = guess_mean-5;
+    Int_t upper_bound = guess_mean+5;
+    TH1D* hist = new TH1D("h","h",lower_bound+upper_bound, lower_bound, upper_bound);
+
+    TF1 fit("fit","[0]*TMath::Gaus(x,[1],[2])",lower_bound,upper_bound);
+    fit.SetParNames("A","mu","sigma");
+
+    fit.SetParLimits(0,0,10);
+    fit.SetParLimits(1,guess_mean-1,guess_mean+1);
+    fit.SetParLimits(2,0,10);
+    fit.SetParameters(1,guess_mean,1);
+
+    hist->Fit("fit","Q");
+
+    Double_t chi2       = fit.GetChisquare()/fit.GetNDF();
+    Double_t mu         = fit.GetParameter(1);
+    Double_t mu_err     = fit.GetParError(1);
+    Double_t sigma      = fit.GetParameter(2);
+    Double_t sigma_err  = fit.GetParError(2);
+
+    delete hist;
+    delete fit;
+
+    return mu;
 }
 
