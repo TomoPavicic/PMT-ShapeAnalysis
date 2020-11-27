@@ -185,7 +185,7 @@ int main(int argc, char **argv)
         Int_t run_num;
         Int_t wall_num;
         Int_t trig_id;
-        Int_t calo_time;
+        Double_t calo_time;
         std::vector<uint16_t> waveform;
 
         // Create a ROOT Tree
