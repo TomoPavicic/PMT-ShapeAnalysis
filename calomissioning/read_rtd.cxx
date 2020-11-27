@@ -705,7 +705,7 @@ Double_t get_pulse_time_mf(std::vector<Double_t> &vec)
     Double_t sigma_err  = fit.GetParError(2);
 
     delete hist;
-
+    std::cout << "mu: " << mu << std::endl;
     return mu;
 }
 
