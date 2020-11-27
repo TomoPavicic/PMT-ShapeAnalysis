@@ -52,6 +52,7 @@ void draw_pulse( std::vector<Double_t> &temp, std::vector<Double_t> &test, Int_t
 void save_hist( std::vector<Double_t> &vec, std::string x_label, std::string y_label, std::string title, std::string file_name, Int_t n_bins, Double_t min_bin, Double_t max_bin, TFile* root_file);
 Double_t get_pulse_time_mf(std::vector<Double_t> &vec);
 std::vector<Double_t> read_energy_coef( std::string filename );
+std::vector<std::string> split( const std::string& s, char delimiter );
 
 bool debug = true;
 
@@ -754,5 +755,16 @@ std::vector<Double_t> read_energy_coef( std::string filename )
     }
 
     return vec;
+}
+std::vector<std::string> split( const std::string& s, char delimiter )
+{
+    std::vector<std::string> tokens;
+    std::string token;
+    std::istringstream tokenStream(s);
+    while (std::getline(tokenStream, token, delimiter))
+    {
+        tokens.push_back(token);
+    }
+    return tokens;
 }
 
