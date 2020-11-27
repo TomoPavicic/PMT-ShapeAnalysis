@@ -191,6 +191,7 @@ int main(int argc, char **argv)
         Int_t trig_id;
         Double_t calo_time;
         std::vector<uint16_t> waveform;
+        Double_t energy;
 
         // Create a ROOT Tree
         TTree tree("T","Tree containing simulated vertex data");
@@ -210,6 +211,7 @@ int main(int argc, char **argv)
         tree.Branch("wall_num",&wall_num);
         tree.Branch("trig_id",&trig_id);
         tree.Branch("calo_time",&calo_time);
+        tree.Branch("energy",&energy);
         //tree.Branch("waveform",&waveform);
 
         bool cont = true;
@@ -285,8 +287,6 @@ int main(int argc, char **argv)
 	                Double_t falling_actual   = (ch_falling_cell_*6.25)/256.0;
 	                Double_t peak_actual      = ch_peak_cell_*6.25/8.0;
 
-	                Double_t energy = -1.0 * (Double_t)ch_charge * energy_coefs[]
-
 	                sncabling::calo_signal_id readout_id(sncabling::CALOSIGNAL_CHANNEL,
 	                        crate_num, board_num,
 	                        snfee::model::feb_constants::SAMLONG_NUMBER_OF_CHANNELS * chip_num + ichannel);
@@ -300,9 +300,9 @@ int main(int argc, char **argv)
                             row = calo_id.get_row();
                             column = calo_id.get_column();
                             OM_ID = row + column*13;
-                            Double_t energy = -1.0 * (Double_t)ch_charge * energy_coefs[OM_ID];
+                            Double_t energy_t = -1.0 * (Double_t)ch_charge * energy_coefs[OM_ID];
 
-                            if (energy > 0.7)
+                            if (energy_t > 0.7)
                             {
                                 amplitude = ch_peak;
                                 baseline  = ch_baseline;
@@ -315,6 +315,7 @@ int main(int argc, char **argv)
                                 run_num = run_id;
                                 wall_num = crate_num;
                                 trig_id = trigger_id;
+                                energy = energy_t;
 
                                 eventn.OM_ID = OM_ID;
                                 eventn.col = column;
@@ -728,7 +729,7 @@ std::vector<Double_t> read_energy_coef( std::string filename )
     std::vector<Double_t> vec;
     for (int i = 0; i < 260 ; ++i)
     {
-        vec.puch_back(0.0);
+        vec.push_back(0.0);
     }
 
     if (!file.good())
