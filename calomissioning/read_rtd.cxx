@@ -2,6 +2,10 @@
 #include <iostream>
 #include <exception>
 #include <cstdlib>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <cmath>
 
 
 #include "TFile.h"
@@ -734,7 +738,7 @@ std::vector<Double_t> read_energy_coef( std::string filename )
 
     if (!file.good())
     {
-        std::cout << "<<<ERROR>>> cannot open configuration file : " << filename << std::endl;
+        std::cout << "<<< ERROR >>> cannot open energy file : " << filename << std::endl;
         std::cout << "EXIT" << std::endl;
         exit(1);
     }
