@@ -51,6 +51,7 @@ void draw_waveform( std::vector<Double_t> &vec, Int_t n_samples, Double_t baseli
 void draw_pulse( std::vector<Double_t> &temp, std::vector<Double_t> &test, Int_t i, Double_t convo, Double_t sample_time, EVENTN &eventn);
 void save_hist( std::vector<Double_t> &vec, std::string x_label, std::string y_label, std::string title, std::string file_name, Int_t n_bins, Double_t min_bin, Double_t max_bin, TFile* root_file);
 Double_t get_pulse_time_mf(std::vector<Double_t> &vec);
+std::vector<Double_t> read_energy_coef( std::string filename );
 
 bool debug = true;
 
@@ -137,6 +138,8 @@ int main(int argc, char **argv)
         }
 
         std::clog<<"Input file name : "<<input_file_name<<std::endl;
+
+        std::vector<Double_t> energy_coefs = read_energy_coef("Resultat_mean_energie_charge_france_435.txt");
 
         TEMP_INFO template_info;
         std::vector<std::vector<Double_t>> template_vectors;
@@ -281,6 +284,8 @@ int main(int argc, char **argv)
 	                Double_t falling_actual   = (ch_falling_cell_*6.25)/256.0;
 	                Double_t peak_actual      = ch_peak_cell_*6.25/8.0;
 
+	                Double_t energy = -1.0 * (Double_t)ch_charge * energy_coefs[]
+
 	                sncabling::calo_signal_id readout_id(sncabling::CALOSIGNAL_CHANNEL,
 	                        crate_num, board_num,
 	                        snfee::model::feb_constants::SAMLONG_NUMBER_OF_CHANNELS * chip_num + ichannel);
@@ -291,105 +296,109 @@ int main(int argc, char **argv)
 	                    if (ch_ht)
 	                    {
 		                    const sncabling::om_id & calo_id = caloSignalCabling.get_om(readout_id);
+                            row = calo_id.get_row();
+                            column = calo_id.get_column();
+                            OM_ID = row + column*13;
+                            Double_t energy = -1.0 * (Double_t)ch_charge * energy_coefs[OM_ID];
 
-		                    row = calo_id.get_row();
-		                    column = calo_id.get_column();
-		                    OM_ID = row + column*13;
-                            amplitude = ch_peak;
-                            baseline  = ch_baseline;
-                            charge    = ch_charge;
-                            rise_time = rising_actual;
-                            fall_time = falling_actual;
-                            peak_time = peak_actual;
-                            calo_hit_num = hit_num;
-                            calo_tdc = tdc;
-                            run_num = run_id;
-                            wall_num = crate_num;
-                            trig_id = trigger_id;
-
-                            eventn.OM_ID = OM_ID;
-                            eventn.col = column;
-                            eventn.row = row;
-                            eventn.wall = crate_num;
-                            eventn.ID = event_num;
-
-                            calo_time = -1000.0;
-
-                            if (do_waveforms)
+                            if (energy > 0.7)
                             {
-                                if ( ch_peak_cell > 1024 - 160){ continue; }
-                                if ( chosen_OM == 1000 ){} else if ( OM_ID != chosen_OM ){ continue; }
+                                amplitude = ch_peak;
+                                baseline  = ch_baseline;
+                                charge    = ch_charge;
+                                rise_time = rising_actual;
+                                fall_time = falling_actual;
+                                peak_time = peak_actual;
+                                calo_hit_num = hit_num;
+                                calo_tdc = tdc;
+                                run_num = run_id;
+                                wall_num = crate_num;
+                                trig_id = trigger_id;
 
-                                uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
-                                std::vector<Double_t> waveform_adc;
-                                for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
-                                {
-                                    uint16_t adc = calo_hit.get_waveforms().get_adc(isample,ichannel);
-                                    waveform_adc.push_back((Double_t)adc);
-                                }
-                                Double_t my_baseline = get_baseline( waveform_adc );
+                                eventn.OM_ID = OM_ID;
+                                eventn.col = column;
+                                eventn.row = row;
+                                eventn.wall = crate_num;
+                                eventn.ID = event_num;
 
-                                if (do_template)
+                                calo_time = -1000.0;
+
+                                if (do_waveforms)
                                 {
-                                    if ( charge >= -25000 && ch_charge < -20000 )
+                                    if ( ch_peak_cell > 1024 - 160){ continue; }
+                                    if ( chosen_OM == 1000 ){} else if ( OM_ID != chosen_OM ){ continue; }
+
+                                    uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
+                                    std::vector<Double_t> waveform_adc;
+                                    for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
                                     {
-                                        std::vector<Double_t> temp_vector;
-                                        for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
-                                        {
-                                            temp_vector.push_back( waveform_adc[isample] - baseline );
-                                        }
-                                        update_temp_vector( template_vectors, temp_vector, OM_ID );
+                                        uint16_t adc = calo_hit.get_waveforms().get_adc(isample,ichannel);
+                                        waveform_adc.push_back((Double_t)adc);
                                     }
+                                    Double_t my_baseline = get_baseline( waveform_adc );
 
-                                } else {
-                                    Int_t n_try = 60;
-                                    std::vector<Double_t> mf_output;
-                                    Double_t norm_temp = sqrt( get_inner_product( template_vectors[OM_ID], template_vectors[OM_ID] ) );
-
-                                    for (int i = 0; i < n_try; ++i)
+                                    if (do_template)
                                     {
-                                        std::vector<Double_t> temp_vector;
-
-                                        for (uint16_t isample = ch_peak_cell - 30 - n_try/2 + i; isample < ch_peak_cell + 100 - n_try/2 + i; isample++)
+                                        if ( charge >= -25000 && ch_charge < -20000 )
                                         {
-                                            Double_t volts = (Double_t)waveform_adc[isample] - my_baseline;
-                                            temp_vector.push_back( volts );
+                                            std::vector<Double_t> temp_vector;
+                                            for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
+                                            {
+                                                temp_vector.push_back( waveform_adc[isample] - baseline );
+                                            }
+                                            update_temp_vector( template_vectors, temp_vector, OM_ID );
                                         }
 
-                                        Double_t norm_test = sqrt( get_inner_product( temp_vector, temp_vector ) );
-                                        Double_t mf = get_inner_product( temp_vector, template_vectors[OM_ID] )/( norm_temp * norm_test );
+                                    } else {
+                                        Int_t n_try = 60;
+                                        std::vector<Double_t> mf_output;
+                                        Double_t norm_temp = sqrt( get_inner_product( template_vectors[OM_ID], template_vectors[OM_ID] ) );
 
-                                        mf_output.push_back(mf);
+                                        for (int i = 0; i < n_try; ++i)
+                                        {
+                                            std::vector<Double_t> temp_vector;
+
+                                            for (uint16_t isample = ch_peak_cell - 30 - n_try/2 + i; isample < ch_peak_cell + 100 - n_try/2 + i; isample++)
+                                            {
+                                                Double_t volts = (Double_t)waveform_adc[isample] - my_baseline;
+                                                temp_vector.push_back( volts );
+                                            }
+
+                                            Double_t norm_test = sqrt( get_inner_product( temp_vector, temp_vector ) );
+                                            Double_t mf = get_inner_product( temp_vector, template_vectors[OM_ID] )/( norm_temp * norm_test );
+
+                                            mf_output.push_back(mf);
+
+                                            if ( chosen_OM == 1000 ){} else if (OM_ID == chosen_OM)
+                                            {
+                                                draw_pulse(template_vectors[OM_ID], temp_vector, i, mf,
+                                                           (ch_peak_cell - 30 - n_try/2 + i)/2.56, eventn);
+                                            }
+                                        }
+                                        /*save_hist(mf_output,"Sample window time /ns","shape index","Pulse_time_finder",
+                                                    "mf_output_" + std::to_string(OM_ID) + ".png",n_try,
+                                                    (ch_peak_cell - 30 - n_try/2)/2.56 ,
+                                                    (ch_peak_cell - 30 + n_try/2)/2.56, output_file);*/
 
                                         if ( chosen_OM == 1000 ){} else if (OM_ID == chosen_OM)
                                         {
-                                            draw_pulse(template_vectors[OM_ID], temp_vector, i, mf,
-                                                    (ch_peak_cell - 30 - n_try/2 + i)/2.56, eventn);
+                                            draw_waveform(waveform_adc, waveform_number_of_samples, my_baseline, eventn, output_file_name);
+                                            return 1;
                                         }
-                                    }
-                                    /*save_hist(mf_output,"Sample window time /ns","shape index","Pulse_time_finder",
-                                                "mf_output_" + std::to_string(OM_ID) + ".png",n_try,
-                                                (ch_peak_cell - 30 - n_try/2)/2.56 ,
-                                                (ch_peak_cell - 30 + n_try/2)/2.56, output_file);*/
 
-                                    if ( chosen_OM == 1000 ){} else if (OM_ID == chosen_OM)
-                                    {
-                                        draw_waveform(waveform_adc, waveform_number_of_samples, my_baseline, eventn, output_file_name);
-                                        return 1;
+                                        if (mf_output.size() > 0)
+                                        {
+                                            calo_time = get_pulse_time_mf(mf_output) + (Double_t)ch_peak_cell - 30.0 - (Double_t)n_try / 2.0;
+                                            // std::cout << "calo_time: " << calo_time << std::endl;
+                                        }
+                                        // Int_t other_calo_time = get_max_value(mf_output) + ch_peak_cell - 30 - n_try/2;
+                                        // std::cout << "int_calo_time: " << other_calo_time << std::endl;
                                     }
+                                    //waveform = temp_vector;
 
-                                    if (mf_output.size() > 0)
-                                    {
-                                        calo_time = get_pulse_time_mf(mf_output) + (Double_t)ch_peak_cell - 30.0 - (Double_t)n_try / 2.0;
-                                        // std::cout << "calo_time: " << calo_time << std::endl;
-                                    }
-                                    // Int_t other_calo_time = get_max_value(mf_output) + ch_peak_cell - 30 - n_try/2;
-                                    // std::cout << "int_calo_time: " << other_calo_time << std::endl;
-                                }
-                                //waveform = temp_vector;
-
-                            } else {}
-                            tree.Fill();
+                                } else {}
+                                tree.Fill();
+                            }
                         }
 	                }
 	            } //end of channels
@@ -709,5 +718,41 @@ Double_t get_pulse_time_mf(std::vector<Double_t> &vec)
     delete hist;
 
     return mu;
+}
+std::vector<Double_t> read_energy_coef( std::string filename )
+{
+    std::ifstream file(filename);
+    std::string line;
+
+    std::vector<Double_t> vec;
+    for (int i = 0; i < 260 ; ++i)
+    {
+        vec.puch_back(0.0);
+    }
+
+    if (!file.good())
+    {
+        std::cout << "<<<ERROR>>> cannot open configuration file : " << filename << std::endl;
+        std::cout << "EXIT" << std::endl;
+        exit(1);
+    }
+
+    while ( std::getline( file, line ) && !file.eof() )
+    {
+        if  (line.empty())
+        {
+            // Empty line so ignore
+            continue;
+        }else{
+            std::vector<std::string> line_vec = split( line, ' ' );
+
+            Int_t OM = std::stoi(line_vec[0]) - 260;
+            Double_t coef = std::stod(line_vec[0]);
+            std::cout << OM << " " << coef << std::endl;
+            vec[OM] = coef;
+        }
+    }
+
+    return vec;
 }
 
