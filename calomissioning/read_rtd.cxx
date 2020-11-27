@@ -140,7 +140,7 @@ int main(int argc, char **argv)
 
         std::clog<<"Input file name : "<<input_file_name<<std::endl;
 
-        std::vector<Double_t> energy_coefs = read_energy_coef("Resultat_mean_energie_charge_france_435.txt");
+        std::vector<Double_t> energy_coefs = read_energy_coef("energy_coefs.csv ");
 
         TEMP_INFO template_info;
         std::vector<std::vector<Double_t>> template_vectors;
@@ -746,7 +746,7 @@ std::vector<Double_t> read_energy_coef( std::string filename )
             // Empty line so ignore
             continue;
         }else{
-            std::vector<std::string> line_vec = split( line, '\t' );
+            std::vector<std::string> line_vec = split( line, ':' );
 
             Int_t OM = std::stoi(line_vec[0]) - 260;
             Double_t coef = std::stod(line_vec[0]);
