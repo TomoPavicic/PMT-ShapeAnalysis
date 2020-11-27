@@ -381,10 +381,10 @@ int main(int argc, char **argv)
                                     if (mf_output.size() > 0)
                                     {
                                         calo_time = get_pulse_time_mf(mf_output) + (Double_t)ch_peak_cell - 30.0 - (Double_t)n_try / 2.0;
-                                        std::cout << "calo_time: " << calo_time << std::endl;
+                                        // std::cout << "calo_time: " << calo_time << std::endl;
                                     }
-                                    Int_t other_calo_time = get_max_value(mf_output) + ch_peak_cell - 30 - n_try/2;
-                                    std::cout << "int_calo_time: " << other_calo_time << std::endl;
+                                    // Int_t other_calo_time = get_max_value(mf_output) + ch_peak_cell - 30 - n_try/2;
+                                    // std::cout << "int_calo_time: " << other_calo_time << std::endl;
                                 }
                                 //waveform = temp_vector;
 
