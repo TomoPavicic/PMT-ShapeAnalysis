@@ -3,6 +3,9 @@
 Set Up
 ------
 
+
+Not this is an older setup that may not work. I recommend using this link https://iscinumpy.gitlab.io/post/root-conda/ which sets up a conda environment for your pyroot.
+
 This repo contains a Class file for reading any form of PMT waveform.
 
 Requirements to use this code:
