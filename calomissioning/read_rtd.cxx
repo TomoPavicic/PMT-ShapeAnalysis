@@ -481,12 +481,12 @@ void update_temp_vector( std::vector<std::vector<Double_t>> &template_vectors, s
     Double_t my_baseline = get_baseline( new_vector );
 
     Int_t j = 0;
-    for (Int_t i = peak_cell - lower_edge; i < peak_cell + higher_edge; ++i)
+    for (Int_t i = peak_cell - tempInfo.low_edge; i < peak_cell + tempInfo.high_edge; ++i)
     {
         template_vectors[OM_ID][j] += new_vector[i] - my_baseline;
         j++;
 
-        if ( j == temp_length )
+        if ( j == tempInfo.temp_length )
         {
             break;
         }
