@@ -166,7 +166,7 @@ int main(int argc, char **argv)
 
         std::clog<<"Input file name : "<<input_file_name<<std::endl;
 
-        std::vector<Double_t> energy_coefs = read_energy_coef("energy_coefs.csv ");
+        std::vector<Double_t> energy_coefs = read_energy_coef("/sps/nemo/scratch/wquinn/PMT-ShapeAnalysis/calomissioning/energy_coefs.csv");
 
         TEMP_INFO template_info;
         std::vector<std::vector<Double_t>> template_vectors;
