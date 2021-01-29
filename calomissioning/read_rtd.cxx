@@ -376,7 +376,7 @@ int main(int argc, char **argv)
                                         {
                                             temp_vector.push_back( waveform_adc[isample] - baseline );
                                         }
-                                        update_temp_vector( template_vectors, temp_vector, OM_ID );
+                                        update_temp_vector( template_vectors, temp_vector, template_info, OM_ID);
                                     }
                                 }else{
                                     matchfilter = sweep(waveform_adc, config_object, my_baseline, template_vectors[OM_ID]);
