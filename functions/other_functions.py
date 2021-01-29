@@ -992,6 +992,66 @@ def process_date(date_array: np.array):
             temp_date = 359
         if date == 201031:
             temp_date = 360
+        if date == 201101:
+            temp_date = 361
+        if date == 201102:
+            temp_date = 362
+        if date == 201103:
+            temp_date = 363
+        if date == 201104:
+            temp_date = 364
+        if date == 201105:
+            temp_date = 365
+        if date == 201106:
+            temp_date = 366
+        if date == 201107:
+            temp_date = 367
+        if date == 201108:
+            temp_date = 368
+        if date == 201109:
+            temp_date = 369
+        if date == 201110:
+            temp_date = 370
+        if date == 201111:
+            temp_date = 371
+        if date == 201112:
+            temp_date = 372
+        if date == 201113:
+            temp_date = 373
+        if date == 201114:
+            temp_date = 374
+        if date == 201115:
+            temp_date = 375
+        if date == 201116:
+            temp_date = 376
+        if date == 201117:
+            temp_date = 377
+        if date == 201118:
+            temp_date = 378
+        if date == 201119:
+            temp_date = 379
+        if date == 201120:
+            temp_date = 380
+        if date == 201121:
+            temp_date = 381
+        if date == 201122:
+            temp_date = 382
+        if date == 201123:
+            temp_date = 383
+        if date == 201124:
+            temp_date = 384
+        if date == 201125:
+            temp_date = 385
+        if date == 201126:
+            temp_date = 386
+        if date == 201127:
+            temp_date = 387
+        if date == 201128:
+            temp_date = 388
+        if date == 201129:
+            temp_date = 389
+        if date == 201130:
+            temp_date = 390
 
         output_list.append(temp_date)
 

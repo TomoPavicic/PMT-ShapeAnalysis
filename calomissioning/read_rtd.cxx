@@ -40,23 +40,45 @@ typedef struct {
 
 typedef struct {
     Int_t low_edge = 30;
-    Int_t high_edge = 100;
-    Int_t temp_length = 130;
+    Int_t high_edge = 70;
+    Int_t temp_length = 100;
 } TEMP_INFO;
+
+typedef struct {
+    Int_t apulse_num;
+    std::vector<Int_t> apulse_times;
+    std::vector<Double_t> apulse_amplitudes;
+    std::vector<Double_t> apulse_shapes;
+    std::vector<Double_t> mf_shapes;
+    std::vector<Double_t> mf_amps;
+} MATCHFILTER;
+
+typedef struct {
+    Int_t sweep_start, pre_trigger, trigger, trig_tolerance, apulse_time_cut;
+    Double_t shape_cut, amp_cut, charge_cut, resistance;
+    std::vector<Double_t> integration;
+    std::string template_file;
+} CONF;
 
 Double_t get_inner_product( std::vector<Double_t> &vec1, std::vector<Double_t> &vec2 );
 std::vector<std::vector<Double_t>> get_template_pulses( std::string template_file , Int_t n_temp );
-void update_temp_vector( std::vector<std::vector<Double_t>> &template_vectors, std::vector<Double_t> new_vector, Int_t OM_ID );
+void update_temp_vector( std::vector<std::vector<Double_t>> &template_vectors, std::vector<Double_t> new_vector,
+                         TEMP_INFO tempInfo, Int_t OM_ID );
 Int_t get_peak_cell( std::vector<Double_t> &vec );
 void write_templates( std::vector<std::vector<Double_t>> &template_vectors );
 Double_t get_baseline( std::vector<Double_t> &vec );
 Int_t get_max_value( std::vector<Double_t> &vec );
-void draw_waveform( std::vector<Double_t> &vec, Int_t n_samples, Double_t baseline, EVENTN &eventn, std::string output_directory);
-void draw_pulse( std::vector<Double_t> &temp, std::vector<Double_t> &test, Int_t i, Double_t convo, Double_t sample_time, EVENTN &eventn);
-void save_hist( std::vector<Double_t> &vec, std::string x_label, std::string y_label, std::string title, std::string file_name, Int_t n_bins, Double_t min_bin, Double_t max_bin, TFile* root_file);
+void draw_waveform( std::vector<Double_t> &vec, Int_t n_samples, Double_t baseline, EVENTN &eventn,
+        std::string output_directory);
+void draw_pulse( std::vector<Double_t> &temp, std::vector<Double_t> &test, Int_t i, Double_t convo,
+        Double_t sample_time, EVENTN &eventn);
+void save_hist( std::vector<Double_t> &vec, std::string x_label, std::string y_label, std::string title,
+        std::string file_name, Int_t n_bins, Double_t min_bin, Double_t max_bin, TFile* root_file);
 Double_t get_pulse_time_mf(std::vector<Double_t> &vec);
 std::vector<Double_t> read_energy_coef( std::string filename );
 std::vector<std::string> split( const std::string& s, char delimiter );
+CONF read_config( std::string filename );
+MATCHFILTER sweep( std::vector<Double_t> &vec, CONF &config, Double_t baseline, std::vector<Double_t>& temp );
 
 bool debug = true;
 
@@ -73,8 +95,8 @@ void usage()
     std::clog<<">>> -i  -  std::string /input/file/path/.gz "<<std::endl;
     std::clog<<">>> -o  -  std::string /output/file/path/.root "<<std::endl;
     std::clog<<">>> -t  -  BOOL create template, def:false "<<std::endl;
-    std::clog<<">>> -OM -  INT def: 1000 (no plots), chosen OM to plot examples "<<std::endl;
-    std::clog<<">>> -W  -  BOOL analyse waveforms def:false "<<std::endl;
+    //std::clog<<">>> -OM -  INT def: 1000 (no plots), chosen OM to plot examples "<<std::endl;
+    //std::clog<<">>> -W  -  BOOL analyse waveforms def:false "<<std::endl;
     std::clog<<std::endl;
 }
 
@@ -87,8 +109,8 @@ int main(int argc, char **argv)
 
     std::string input_file_name, output_file_name;
     bool do_template = false;
-    int chosen_OM = 1000;
-    bool do_waveforms = false;
+    //int chosen_OM = 1000;
+    //bool do_waveforms = false;
 
     try {
     
@@ -120,7 +142,7 @@ int main(int argc, char **argv)
                         do_template = false;
                     }
                 }
-                else if ( s == "-OM" )
+                /*else if ( s == "-OM" )
                 {
                     chosen_OM = std::stoi(argv[i+1]);
                 }
@@ -132,7 +154,7 @@ int main(int argc, char **argv)
                     }else{
                         do_waveforms = false;
                     }
-                }
+                }*/
 	        }
         }
     
@@ -197,6 +219,9 @@ int main(int argc, char **argv)
         std::vector<uint16_t> waveform;
         Double_t energy;
 
+        CONF config_object = read_config( "/sps/nemo/scratch/wquinn/PMT-ShapeAnalysis/config_files/snemo_calo.conf" );
+        MATCHFILTER matchfilter;
+
         // Create a ROOT Tree
         TTree tree("T","Tree containing simulated vertex data");
         tree.Branch("event_num",&event_num);
@@ -216,7 +241,13 @@ int main(int argc, char **argv)
         tree.Branch("trig_id",&trig_id);
         tree.Branch("calo_time",&calo_time);
         tree.Branch("energy",&energy);
-        //tree.Branch("waveform",&waveform);
+        tree.Branch("apulse_num",&matchfilter.apulse_num);
+        tree.Branch("apulse_times",&matchfilter.apulse_times);
+        tree.Branch("apulse_amplitudes",&matchfilter.apulse_amplitudes);
+        tree.Branch("apulse_shapes",&matchfilter.apulse_shapes);
+        tree.Branch("mf_amplitudes",&matchfilter.mf_amps);
+        tree.Branch("mf_shapes",&matchfilter.mf_shapes);
+        tree.Branch("waveform",&waveform);
 
         bool cont = true;
 
@@ -327,82 +358,29 @@ int main(int argc, char **argv)
                                 eventn.wall = crate_num;
                                 eventn.ID = event_num;
 
-                                calo_time = -1000.0;
-
-                                if (do_waveforms)
+                                uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
+                                std::vector<Double_t> waveform_adc;
+                                for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
                                 {
-                                    if ( ch_peak_cell > 1024 - 160){ continue; }
-                                    if ( chosen_OM == 1000 ){} else if ( OM_ID != chosen_OM ){ continue; }
+                                    uint16_t adc = calo_hit.get_waveforms().get_adc(isample,ichannel);
+                                    waveform_adc.push_back((Double_t)adc);
+                                }
+                                Double_t my_baseline = get_baseline( waveform_adc );
 
-                                    uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
-                                    std::vector<Double_t> waveform_adc;
-                                    for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
+                                if (do_template)
+                                {
+                                    if ( charge >= -25000 && ch_charge < -20000 )
                                     {
-                                        uint16_t adc = calo_hit.get_waveforms().get_adc(isample,ichannel);
-                                        waveform_adc.push_back((Double_t)adc);
+                                        std::vector<Double_t> temp_vector;
+                                        for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
+                                        {
+                                            temp_vector.push_back( waveform_adc[isample] - baseline );
+                                        }
+                                        update_temp_vector( template_vectors, temp_vector, OM_ID );
                                     }
-                                    Double_t my_baseline = get_baseline( waveform_adc );
-
-                                    if (do_template)
-                                    {
-                                        if ( charge >= -25000 && ch_charge < -20000 )
-                                        {
-                                            std::vector<Double_t> temp_vector;
-                                            for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
-                                            {
-                                                temp_vector.push_back( waveform_adc[isample] - baseline );
-                                            }
-                                            update_temp_vector( template_vectors, temp_vector, OM_ID );
-                                        }
-
-                                    } else {
-                                        Int_t n_try = 60;
-                                        std::vector<Double_t> mf_output;
-                                        Double_t norm_temp = sqrt( get_inner_product( template_vectors[OM_ID], template_vectors[OM_ID] ) );
-
-                                        for (int i = 0; i < n_try; ++i)
-                                        {
-                                            std::vector<Double_t> temp_vector;
-
-                                            for (uint16_t isample = ch_peak_cell - 30 - n_try/2 + i; isample < ch_peak_cell + 100 - n_try/2 + i; isample++)
-                                            {
-                                                Double_t volts = (Double_t)waveform_adc[isample] - my_baseline;
-                                                temp_vector.push_back( volts );
-                                            }
-
-                                            Double_t norm_test = sqrt( get_inner_product( temp_vector, temp_vector ) );
-                                            Double_t mf = get_inner_product( temp_vector, template_vectors[OM_ID] )/( norm_temp * norm_test );
-
-                                            mf_output.push_back(mf);
-
-                                            if ( chosen_OM == 1000 ){} else if (OM_ID == chosen_OM)
-                                            {
-                                                draw_pulse(template_vectors[OM_ID], temp_vector, i, mf,
-                                                           (ch_peak_cell - 30 - n_try/2 + i)/2.56, eventn);
-                                            }
-                                        }
-                                        /*save_hist(mf_output,"Sample window time /ns","shape index","Pulse_time_finder",
-                                                    "mf_output_" + std::to_string(OM_ID) + ".png",n_try,
-                                                    (ch_peak_cell - 30 - n_try/2)/2.56 ,
-                                                    (ch_peak_cell - 30 + n_try/2)/2.56, output_file);*/
-
-                                        if ( chosen_OM == 1000 ){} else if (OM_ID == chosen_OM)
-                                        {
-                                            draw_waveform(waveform_adc, waveform_number_of_samples, my_baseline, eventn, output_file_name);
-                                            return 1;
-                                        }
-
-                                        if (mf_output.size() > 0)
-                                        {
-                                            calo_time = get_pulse_time_mf(mf_output) + (Double_t)ch_peak_cell - 30.0 - (Double_t)n_try / 2.0;
-                                            // std::cout << "calo_time: " << calo_time << std::endl;
-                                        }
-                                        // Int_t other_calo_time = get_max_value(mf_output) + ch_peak_cell - 30 - n_try/2;
-                                        // std::cout << "int_calo_time: " << other_calo_time << std::endl;
-                                    }
-                                    //waveform = temp_vector;
-
-                                } else {}
+                                }else{
+                                    matchfilter = sweep(waveform_adc, config_object, my_baseline, template_vectors[OM_ID]);
+                                }
                                 tree.Fill();
                             }
                         }
@@ -410,6 +388,7 @@ int main(int argc, char **argv)
 	            } //end of channels
             }//end of calohit
             event_num ++;
+            if (event_num == 20){ break; }
         }   //end of file
     
         std::clog<<"Events processed : " << rtd_counter<< " entries" << std::endl;
@@ -494,13 +473,10 @@ Double_t get_inner_product( std::vector<Double_t> &vec1, std::vector<Double_t> &
     }
     return inner_product;
 }
-void update_temp_vector( std::vector<std::vector<Double_t>> &template_vectors, std::vector<Double_t> new_vector, Int_t OM_ID )
+void update_temp_vector( std::vector<std::vector<Double_t>> &template_vectors, std::vector<Double_t> new_vector,
+        TEMP_INFO tempInfo, Int_t OM_ID )
 {
-    Int_t temp_length = 130;
     Int_t peak_cell = get_peak_cell( new_vector );
-
-    Int_t lower_edge = 30;
-    Int_t higher_edge = 100;
 
     Double_t my_baseline = get_baseline( new_vector );
 
@@ -771,5 +747,144 @@ std::vector<std::string> split( const std::string& s, char delimiter )
         tokens.push_back(token);
     }
     return tokens;
+}
+MATCHFILTER sweep( std::vector<Double_t> &vec, CONF &config, Double_t baseline, std::vector<Double_t>& temp )
+{
+    MATCHFILTER temp_mf;
+
+    // ######################################################################################
+    // Note that for the AOD we will set the sweep start to be the beginning of the waveform
+    // The config sweep start will be used as a time cut instead
+    // ######################################################################################
+
+    // Int_t sweep_start = config.sweep_start;
+    Int_t sweep_start = 0;
+    Int_t time_cut = config.sweep_start;
+    Double_t shape_cut = config.shape_cut;
+    Double_t amp_cut = config.amp_cut;
+    Int_t apulse_time_cut = config.apulse_time_cut;
+
+    // Create containers for the output amplitude and times of afterpulses after applying cuts
+    std::vector<Double_t> apulse_amp_vec;
+    std::vector<Double_t> apulse_shape_vec;
+    std::vector<Int_t> apulse_time_vec;
+
+    // Define some iterators to be used when applying cuts
+    Int_t current_apulse = 0;
+    // This defines that an afterpulse (a value rising above the cuts) must be separated by the size of
+    // 2* the size of the template to be counted as a new afterpulse
+    Int_t previous_apulse = sweep_start - (Int_t)temp.size();
+
+    // Create containers for the shape and amplitude convolutions for storing
+    std::vector<Double_t> shape_convolution;
+    std::vector<Double_t> amp_convolution;
+
+    // Begin the convolution or sweep
+    for ( Int_t i_sweep = sweep_start; i_sweep < (Int_t)vec.size() - (Int_t)temp.size(); i_sweep++ )
+    {
+        // At each point we will define a test/sample, in which we will look for a pulse via a convolution
+        std::vector<Double_t> test;
+        for ( Int_t i_vec = 0; i_vec < (Int_t)temp.size(); i_vec++ )
+        {
+            test.push_back( vec[i_vec + i_sweep] - baseline );
+        }
+
+        // Perform the convolution
+        Double_t test_norm = sqrt(get_inner_product( test, test ));
+        // Double_t temp_norm = get_inner_product( temp, temp );
+        Double_t amplitude_index = get_inner_product( test, temp );
+        Double_t shape_index = amplitude_index/test_norm;
+
+        if (shape_index > 1.0)
+        {
+            std::cout << "Error: shape_index: "<< shape_index << " > 1" << std::endl;
+            exit(1);
+        }
+
+        // Store the convolution
+        shape_convolution.push_back(shape_index);
+        amp_convolution.push_back(amplitude_index);
+
+        // The main cut is on time as we don't care about the main pulse
+        if ( i_sweep > time_cut )
+        {
+            if ( shape_index > shape_cut && amplitude_index > amp_cut) // We have an afterpulse
+            {
+                Int_t distance_to_nearest_afterpulse = i_sweep - previous_apulse;
+
+                // Check whether still on same afterpulse using the afterpulse time cut
+                if (distance_to_nearest_afterpulse > apulse_time_cut)
+                {
+                    // This is a new afterpulse:
+                    apulse_amp_vec.push_back( amplitude_index );
+                    apulse_shape_vec.push_back( shape_index );
+                    apulse_time_vec.push_back( i_sweep );
+                    previous_apulse = i_sweep;
+                    current_apulse = apulse_amp_vec.size()-1;
+                } else{
+                    // We are still analysing the same afterpulse
+                    if (amplitude_index > apulse_amp_vec[current_apulse])
+                    {
+                        apulse_amp_vec[current_apulse] = amplitude_index;
+                        apulse_shape_vec[current_apulse] = shape_index;
+                        apulse_time_vec[current_apulse] = i_sweep;
+                    }
+                }
+            }
+        }
+    }
+
+    temp_mf.apulse_amplitudes = apulse_amp_vec;
+    temp_mf.apulse_shapes = apulse_shape_vec;
+    temp_mf.apulse_times = apulse_time_vec;
+    temp_mf.mf_amps = amp_convolution;
+    temp_mf.mf_shapes = shape_convolution;
+    temp_mf.apulse_num = (Int_t)apulse_time_vec.size();
+    return temp_mf;
+}
+CONF read_config( std::string filename )
+{
+    CONF config;
+
+    std::ifstream file(filename);
+    std::string line;
+
+    if (!file.good())
+    {
+        std::cout << "matched_filter.cpp : ERROR opening configuration file : " << filename << std::endl;
+        std::cout << "EXIT" << std::endl;
+        exit(1);
+    }
+
+    while ( std::getline( file, line ) && !file.eof() )
+    {
+        if ( line.find ( "#" ) != std::string::npos )
+        {
+            // A comment so ignore
+            continue;
+
+        }
+        else if  (line.empty())
+        {
+            // Empty line so ignore
+            continue;
+        }else{
+            std::vector<std::string> settings = split( line, ':' );
+            if ( settings[0] == "integration" ) { config.integration.push_back(std::stod(settings[1])); config.integration.push_back(std::stod(settings[2])); }
+            else if ( settings[0] == "sweep_start" ) { config.sweep_start = std::stoi(settings[1]); }
+            else if ( settings[0] == "pre_trigger" ) { config.pre_trigger = std::stoi(settings[1]); }
+            else if ( settings[0] == "shape_cut" ) { config.shape_cut = std::stod(settings[1]); }
+            else if ( settings[0] == "amp_cut" ) { config.amp_cut = std::stod(settings[1]); }
+            else if ( settings[0] == "charge_cut" ) { config.charge_cut = std::stod(settings[1]); }
+            else if ( settings[0] == "trigger" ) { config.trigger = std::stod(settings[1]); }
+            else if ( settings[0] == "trig_tolerance" ) { config.trig_tolerance = std::stod(settings[1]); }
+            else if ( settings[0] == "resistance" ) { config.resistance = std::stod(settings[1]); }
+            else if ( settings[0] == "apulse_time_cut" ) { config.apulse_time_cut = std::stod(settings[1]); }
+            else if ( settings[0] == "temp_file" ) { config.template_file = settings[1]; }
+            else { continue; }
+        }
+    }
+
+    return config;
 }
 

@@ -180,15 +180,15 @@ Int_t main(Int_t argc, char* argv[])
     tree.Branch("event_num_ch1",&description.tot_event_ch1);
 
     // Branch for the storing of the raw waveform
-    // tree.Branch("waveform",&waveform);
+    tree.Branch("waveform",&waveform);
 
     // Branch for the afterpulse analysis
     tree.Branch("apulse_num",&matchfilter.apulse_num);
     tree.Branch("apulse_times",&matchfilter.apulse_times);
     tree.Branch("apulse_amplitudes",&matchfilter.apulse_amplitudes);
     tree.Branch("apulse_shapes",&matchfilter.apulse_shapes);
-    // tree.Branch("mf_amplitudes",&matchfilter.mf_amps);
-    // tree.Branch("mf_shapes",&matchfilter.mf_shapes);
+    tree.Branch("mf_amplitudes",&matchfilter.mf_amps);
+    tree.Branch("mf_shapes",&matchfilter.mf_shapes);
 
     std::ifstream data_file( input_file );
     std::string data_line;
