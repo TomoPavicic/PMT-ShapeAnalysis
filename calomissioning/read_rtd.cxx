@@ -396,7 +396,7 @@ int main(int argc, char **argv)
         output_file->Write();
         output_file->Close();
 
-        //write_templates( template_vectors );
+        if ( do_template ){ write_templates( template_vectors ); }
 
     } catch (std::exception & error)
     {
