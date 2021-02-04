@@ -354,7 +354,7 @@ int main(int argc, char **argv)
                                 run_num = run_id;
                                 wall_num = crate_num;
                                 trig_id = trigger_id;
-                                energy = energy_t;
+                                energy = 0.0;
 
                                 eventn.OM_ID = OM_ID;
                                 eventn.col = column;
