@@ -339,7 +339,9 @@ int main(int argc, char **argv)
 
                             std::cout << "charge: " << ch_charge << std::endl;
 
-                            if (energy_t > 0.7)
+                            bool charge_bool = true;
+
+                            if (charge_bool)
                             {
                                 amplitude = ch_peak;
                                 baseline  = ch_baseline;
