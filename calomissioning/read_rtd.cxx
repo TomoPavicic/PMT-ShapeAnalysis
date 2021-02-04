@@ -326,10 +326,12 @@ int main(int argc, char **argv)
 	                        crate_num, board_num,
 	                        snfee::model::feb_constants::SAMLONG_NUMBER_OF_CHANNELS * chip_num + ichannel);
 
+	                bool do_bool = true;
+
 	  
 	                if (caloSignalCabling.has_channel(readout_id))
 	                {
-	                    if (ch_ht)
+	                    if (do_bool)
 	                    {
 		                    const sncabling::om_id & calo_id = caloSignalCabling.get_om(readout_id);
                             row = calo_id.get_row();
