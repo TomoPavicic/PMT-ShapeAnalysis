@@ -335,7 +335,9 @@ int main(int argc, char **argv)
                             row = calo_id.get_row();
                             column = calo_id.get_column();
                             OM_ID = row + column*13;
-                            Double_t energy_t = -1.0 * (Double_t)ch_charge * energy_coefs[OM_ID];
+                            // Double_t energy_t = -1.0 * (Double_t)ch_charge * energy_coefs[OM_ID];
+
+                            std::cout << "charge: " << ch_charge << std::endl;
 
                             if (energy_t > 0.7)
                             {
@@ -730,7 +732,7 @@ std::vector<Double_t> read_energy_coef( std::string filename )
 
             Int_t OM = std::stoi(line_vec[0]);
             Double_t coef = std::stod(line_vec[1]);
-            std::cout << OM << " " << coef << std::endl;
+            // std::cout << OM << " " << coef << std::endl;
             vec[OM] = coef;
         }
     }
