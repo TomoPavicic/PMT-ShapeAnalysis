@@ -1052,7 +1052,68 @@ def process_date(date_array: np.array):
             temp_date = 389
         if date == 201130:
             temp_date = 390
-
+        if date == 201201:
+            temp_date = 391
+        if date == 201202:
+            temp_date = 392
+        if date == 201203:
+            temp_date = 393
+        if date == 201204:
+            temp_date = 394
+        if date == 201205:
+            temp_date = 395
+        if date == 201206:
+            temp_date = 396
+        if date == 201207:
+            temp_date = 397
+        if date == 201208:
+            temp_date = 398
+        if date == 201209:
+            temp_date = 399
+        if date == 201210:
+            temp_date = 400
+        if date == 201211:
+            temp_date = 401
+        if date == 201212:
+            temp_date = 402
+        if date == 201213:
+            temp_date = 403
+        if date == 201214:
+            temp_date = 404
+        if date == 201215:
+            temp_date = 405
+        if date == 201216:
+            temp_date = 406
+        if date == 201217:
+            temp_date = 407
+        if date == 201218:
+            temp_date = 408
+        if date == 201219:
+            temp_date = 409
+        if date == 201220:
+            temp_date = 410
+        if date == 201221:
+            temp_date = 411
+        if date == 201222:
+            temp_date = 412
+        if date == 201223:
+            temp_date = 413
+        if date == 201224:
+            temp_date = 414
+        if date == 201225:
+            temp_date = 415
+        if date == 201226:
+            temp_date = 416
+        if date == 201227:
+            temp_date = 417
+        if date == 201228:
+            temp_date = 418
+        if date == 201229:
+            temp_date = 419
+        if date == 201230:
+            temp_date = 420
+        if date == 201231:
+            temp_date = 421
         output_list.append(temp_date)
 
     output_array = np.array(output_list)
