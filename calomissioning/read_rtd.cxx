@@ -726,7 +726,7 @@ std::vector<Double_t> read_energy_coef( std::string filename )
             // Empty line so ignore
             continue;
         }else{
-            std::vector<std::string> line_vec = split( line, ':' );
+            std::vector<std::string> line_vec = split( line, ',' );
 
             Int_t OM = std::stoi(line_vec[0]) - 260;
             Double_t coef = std::stod(line_vec[1]);
