@@ -298,9 +298,9 @@ Int_t main(Int_t argc, char* argv[])
     std::cout << ">>> Events per channel: " << channel_waveform_num[0] << " Ch0, " << channel_waveform_num[1] << " Ch1" << std::endl;
 
     //Store the number of entries inthe raw file so we can remember the storage efficiency
-    description.tot_event_ch0 = channel_event_num[0];
-    description.tot_event_ch1 = channel_event_num[1];
-    tree.Fill();
+    //description.tot_event_ch0 = channel_event_num[0];
+    //description.tot_event_ch1 = channel_event_num[1];
+    //tree.Fill();
     root_file.Write();
     root_file.Close();
 
