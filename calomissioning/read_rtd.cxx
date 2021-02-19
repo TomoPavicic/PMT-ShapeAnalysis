@@ -170,7 +170,7 @@ int main(int argc, char **argv)
 
         TEMP_INFO template_info;
         std::vector<std::vector<Double_t>> template_vectors;
-        if ( do_template )
+        /*if ( do_template )
         {
             for (int k = 0; k < 260; ++k)
             {
@@ -191,7 +191,7 @@ int main(int argc, char **argv)
 
         } else {
             template_vectors = get_template_pulses( "templates.root", 260 );
-        }
+        }*/
 
         sncabling::service snCabling;
         snCabling.initialize_simple();
@@ -396,8 +396,8 @@ int main(int argc, char **argv)
         }   //end of file
     
         std::clog<<"Events processed : " << rtd_counter<< " entries" << std::endl;
-        output_file->cd();
-        output_file->Write();
+        //output_file->cd();
+        //output_file->Write();
         output_file->Close();
 
         if ( do_template ){ write_templates( template_vectors ); }
