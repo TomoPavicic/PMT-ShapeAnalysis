@@ -327,9 +327,9 @@ int main(int argc, char **argv)
 	                        snfee::model::feb_constants::SAMLONG_NUMBER_OF_CHANNELS * chip_num + ichannel);
 
 	                bool do_bool = true;
-
+                    std::cout << "charge: " << ch_charge << std::endl;
 	  
-	                if (caloSignalCabling.has_channel(readout_id))
+	                /*if (caloSignalCabling.has_channel(readout_id))
 	                {
 	                    if (do_bool)
 	                    {
@@ -338,8 +338,6 @@ int main(int argc, char **argv)
                             column = calo_id.get_column();
                             OM_ID = row + column*13;
                             // Double_t energy_t = -1.0 * (Double_t)ch_charge * energy_coefs[OM_ID];
-
-                            std::cout << "charge: " << ch_charge << std::endl;
 
                             bool charge_bool = true;
 
@@ -390,7 +388,7 @@ int main(int argc, char **argv)
                                 tree.Fill();
                             }
                         }
-	                }
+	                }*/
 	            } //end of channels
             }//end of calohit
             event_num ++;
