@@ -262,7 +262,7 @@ int main(int argc, char **argv)
             int32_t trigger_id = rtd.get_trigger_id();
             int32_t run_id     = rtd.get_run_id();
       
-            if(rtd_counter %10000 == 0 )std::clog<<"In Run : "<<run_id<<" Trigger # "<<trigger_id <<std::endl;
+            if(rtd_counter %1000 == 0 )std::clog<<"In Run : "<<run_id<<" Trigger # "<<trigger_id <<std::endl;
       
             std::size_t calo_counter = 0;
             // Loop on calo hit records in the RTD data object:
@@ -365,7 +365,7 @@ int main(int argc, char **argv)
 	            } //end of channels
             }//end of calohit
             event_num ++;
-            if (event_num == 100000 && !do_template){ break; }
+            if (event_num == 10000 && !do_template){ break; }
         }   //end of file
     
         std::clog<<"Events processed : " << rtd_counter<< " entries" << std::endl;
