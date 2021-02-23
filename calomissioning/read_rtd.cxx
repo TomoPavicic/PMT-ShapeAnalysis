@@ -328,7 +328,7 @@ int main(int argc, char **argv)
 	                        snfee::model::feb_constants::SAMLONG_NUMBER_OF_CHANNELS * chip_num + ichannel);
 
 	                bool do_bool = true;
-                    std::cout << "charge: " << ch_charge << std::endl;
+                    //std::cout << "charge: " << ch_charge << std::endl;
 	  
 	                if (caloSignalCabling.has_channel(readout_id))
 	                {
@@ -342,7 +342,7 @@ int main(int argc, char **argv)
 
                             bool charge_bool = true;
 
-                            if (charge_bool)
+                            if (ch_charge < -100)
                             {
                                 amplitude = ch_peak;
                                 baseline  = ch_baseline;
@@ -386,7 +386,7 @@ int main(int argc, char **argv)
                                 }else{
                                     matchfilter = sweep(waveform, config_object, my_baseline, template_vectors[OM_ID]);
                                 }*/
-                                std::cout<< "Tree fill" << std::endl;
+                                //std::cout<< "Tree fill" << std::endl;
                                 tree.Fill();
                             }
                         }
