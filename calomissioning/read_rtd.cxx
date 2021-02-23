@@ -226,12 +226,12 @@ int main(int argc, char **argv)
         tree.Branch("baseline",&baseline);
         tree.Branch("amplitude",&amplitude);
         tree.Branch("wall_num",&wall_num);
-        /*tree.Branch("apulse_num",&matchfilter.apulse_num);
+        tree.Branch("apulse_num",&matchfilter.apulse_num);
         tree.Branch("apulse_times",&matchfilter.apulse_times);
         tree.Branch("apulse_amplitudes",&matchfilter.apulse_amplitudes);
         tree.Branch("apulse_shapes",&matchfilter.apulse_shapes);
         tree.Branch("mf_amplitudes",&matchfilter.mf_amps);
-        tree.Branch("mf_shapes",&matchfilter.mf_shapes);*/
+        tree.Branch("mf_shapes",&matchfilter.mf_shapes);
         tree.Branch("waveform",&waveform);
 
         bool cont = true;
