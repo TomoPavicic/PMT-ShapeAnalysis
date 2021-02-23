@@ -231,7 +231,7 @@ int main(int argc, char **argv)
         tree.Branch("charge",&charge);
         tree.Branch("baseline",&baseline);
         tree.Branch("amplitude",&amplitude);
-        tree.Branch("rise_time",&rise_time);
+        /*tree.Branch("rise_time",&rise_time);
         tree.Branch("fall_time",&fall_time);
         tree.Branch("peak_time",&peak_time);
         tree.Branch("calo_hit_num",&calo_hit_num);
@@ -246,7 +246,7 @@ int main(int argc, char **argv)
         tree.Branch("apulse_amplitudes",&matchfilter.apulse_amplitudes);
         tree.Branch("apulse_shapes",&matchfilter.apulse_shapes);
         tree.Branch("mf_amplitudes",&matchfilter.mf_amps);
-        tree.Branch("mf_shapes",&matchfilter.mf_shapes);
+        tree.Branch("mf_shapes",&matchfilter.mf_shapes);*/
         tree.Branch("waveform",&waveform);
 
         bool cont = true;
@@ -304,6 +304,7 @@ int main(int argc, char **argv)
 	            // 2 channels per SAMLONG
 	            for (int ichannel = 0; ichannel < snfee::model::feb_constants::SAMLONG_NUMBER_OF_CHANNELS; ichannel++)
 	            {
+                    waveform.clear();
 	                const snfee::data::calo_hit_record::channel_data_record & ch_data = calo_hit.get_channel_data(ichannel);
 	                bool    ch_lt           {ch_data.is_lt()};            // Low threshold flag
 	                bool    ch_ht           {ch_data.is_ht()};            // High threshold flag
@@ -362,8 +363,6 @@ int main(int argc, char **argv)
                                 eventn.wall = crate_num;
                                 eventn.ID = event_num;
 
-                                waveform.clear();
-
                                 uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
                                 // std::vector<Double_t> waveform_adc;
                                 for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
@@ -373,7 +372,7 @@ int main(int argc, char **argv)
                                 }
                                 Double_t my_baseline = get_baseline( waveform );
 
-                                if (do_template)
+                                /*if (do_template)
                                 {
                                     if ( charge >= -25000 && ch_charge < -20000 )
                                     {
@@ -386,7 +385,7 @@ int main(int argc, char **argv)
                                     }
                                 }else{
                                     matchfilter = sweep(waveform, config_object, my_baseline, template_vectors[OM_ID]);
-                                }
+                                }*/
                                 std::cout<< "Tree fill" << std::endl;
                                 tree.Fill();
                             }
