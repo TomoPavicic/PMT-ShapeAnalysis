@@ -351,9 +351,10 @@ int main(int argc, char **argv)
 	                                    config_object );
 	                        }else{
 	                            matchfilter = sweep(waveform, config_object, my_baseline, template_vectors[OM_ID]);
+                                tree.Fill();
 	                        }
 	                        //std::cout<< "Tree fill" << std::endl;
-	                        tree.Fill();
+
                         }
 	                }
 	            } //end of channels
