@@ -216,7 +216,7 @@ int main(int argc, char **argv)
         Int_t wall_num;
         Int_t trig_id;
         Double_t calo_time;
-        std::vector<uint16_t> waveform;
+        std::vector<Double_t> waveform;
         Double_t energy;
 
         CONF config_object = read_config( "/sps/nemo/scratch/wquinn/PMT-ShapeAnalysis/config_files/snemo_calo.conf" );
