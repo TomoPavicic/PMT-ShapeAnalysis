@@ -387,6 +387,7 @@ int main(int argc, char **argv)
 
 std::vector<std::vector<Double_t>> get_template_pulses( std::string template_file , Int_t n_temp )
 {
+    std::cout << "get_template_pulses" << std::endl;
     std::vector<std::vector<Double_t>> template_pulses;
     std::cout << std::endl;
     std::cout << "Template file name : " << template_file << std::endl;
