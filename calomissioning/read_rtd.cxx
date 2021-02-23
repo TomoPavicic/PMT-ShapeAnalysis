@@ -231,13 +231,14 @@ int main(int argc, char **argv)
         tree.Branch("charge",&charge);
         tree.Branch("baseline",&baseline);
         tree.Branch("amplitude",&amplitude);
+        tree.Branch("wall_num",&wall_num);
         /*tree.Branch("rise_time",&rise_time);
         tree.Branch("fall_time",&fall_time);
         tree.Branch("peak_time",&peak_time);
         tree.Branch("calo_hit_num",&calo_hit_num);
         tree.Branch("calo_tdc",&calo_tdc);
         tree.Branch("run_num",&run_num);
-        tree.Branch("wall_num",&wall_num);
+
         tree.Branch("trig_id",&trig_id);
         tree.Branch("calo_time",&calo_time);
         tree.Branch("energy",&energy);
