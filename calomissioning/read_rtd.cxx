@@ -343,8 +343,9 @@ int main(int argc, char **argv)
 	                        }
 	                        Double_t my_baseline = get_baseline( waveform , config_object);
 
-	                        if (do_template && average_counter[OM_ID] < n_average)
+	                        if ( do_template )
 	                        {
+	                            if ( average_counter[OM_ID] < n_average ){ continue; }
 	                            std::vector<Double_t> temp_vector;
 	                            for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
 	                            {
