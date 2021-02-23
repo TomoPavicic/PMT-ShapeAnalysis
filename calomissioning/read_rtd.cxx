@@ -329,7 +329,7 @@ int main(int argc, char **argv)
 	                bool do_bool = true;
                     std::cout << "charge: " << ch_charge << std::endl;
 	  
-	                /*if (caloSignalCabling.has_channel(readout_id))
+	                if (caloSignalCabling.has_channel(readout_id))
 	                {
 	                    if (do_bool)
 	                    {
@@ -362,14 +362,16 @@ int main(int argc, char **argv)
                                 eventn.wall = crate_num;
                                 eventn.ID = event_num;
 
+                                waveform.clear();
+
                                 uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
-                                std::vector<Double_t> waveform_adc;
+                                // std::vector<Double_t> waveform_adc;
                                 for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
                                 {
                                     uint16_t adc = calo_hit.get_waveforms().get_adc(isample,ichannel);
-                                    waveform_adc.push_back((Double_t)adc);
+                                    waveform.push_back((Double_t)adc);
                                 }
-                                Double_t my_baseline = get_baseline( waveform_adc );
+                                Double_t my_baseline = get_baseline( waveform );
 
                                 if (do_template)
                                 {
@@ -378,17 +380,17 @@ int main(int argc, char **argv)
                                         std::vector<Double_t> temp_vector;
                                         for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
                                         {
-                                            temp_vector.push_back( waveform_adc[isample] - baseline );
+                                            temp_vector.push_back( waveform[isample] - baseline );
                                         }
                                         update_temp_vector( template_vectors, temp_vector, template_info, OM_ID);
                                     }
                                 }else{
-                                    matchfilter = sweep(waveform_adc, config_object, my_baseline, template_vectors[OM_ID]);
+                                    matchfilter = sweep(waveform, config_object, my_baseline, template_vectors[OM_ID]);
                                 }
                                 tree.Fill();
                             }
                         }
-	                }*/
+	                }
 	            } //end of channels
             }//end of calohit
             event_num ++;
