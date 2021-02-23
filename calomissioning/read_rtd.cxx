@@ -166,6 +166,9 @@ int main(int argc, char **argv)
 
         std::clog<<"Input file name : "<<input_file_name<<std::endl;
 
+        std::vector<int> average_counter(260,0);
+        int n_average = 1000;
+
         // std::vector<Double_t> energy_coefs = read_energy_coef("/sps/nemo/scratch/wquinn/PMT-ShapeAnalysis/calomissioning/energy_coefs.csv");
 
         TEMP_INFO template_info;
@@ -340,7 +343,7 @@ int main(int argc, char **argv)
 	                        }
 	                        Double_t my_baseline = get_baseline( waveform , config_object);
 
-	                        if (do_template)
+	                        if (do_template && average_counter[OM_ID] < n_average)
 	                        {
 	                            std::vector<Double_t> temp_vector;
 	                            for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
@@ -349,6 +352,7 @@ int main(int argc, char **argv)
 	                            }
 	                            update_temp_vector( template_vectors, temp_vector, template_info, OM_ID,
 	                                    config_object );
+	                            average_counter[OM_ID]++;
 	                        }else{
 	                            matchfilter = sweep(waveform, config_object, my_baseline, template_vectors[OM_ID]);
                                 tree.Fill();
