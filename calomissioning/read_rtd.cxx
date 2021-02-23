@@ -398,9 +398,10 @@ int main(int argc, char **argv)
         }   //end of file
     
         std::clog<<"Events processed : " << rtd_counter<< " entries" << std::endl;
-        //output_file->cd();
-        //output_file->Write();
+        output_file->cd();
+        output_file->Write();
         output_file->Close();
+        std::cout << "File closed" << std::endl;
 
         if ( do_template ){ write_templates( template_vectors ); }
 
