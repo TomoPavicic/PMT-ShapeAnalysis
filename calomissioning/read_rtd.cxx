@@ -394,7 +394,7 @@ int main(int argc, char **argv)
 	            } //end of channels
             }//end of calohit
             event_num ++;
-            if (event_num == 20){ break; }
+            if (event_num == 100000){ break; }
         }   //end of file
     
         std::clog<<"Events processed : " << rtd_counter<< " entries" << std::endl;
