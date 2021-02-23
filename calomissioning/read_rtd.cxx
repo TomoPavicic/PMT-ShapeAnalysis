@@ -387,6 +387,7 @@ int main(int argc, char **argv)
                                 }else{
                                     matchfilter = sweep(waveform, config_object, my_baseline, template_vectors[OM_ID]);
                                 }
+                                std::cout<< "Tree fill" << std::endl;
                                 tree.Fill();
                             }
                         }
