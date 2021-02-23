@@ -505,6 +505,8 @@ void write_templates( std::vector<std::vector<Double_t>> &template_vectors )
         }
         hist->Write();
         delete hist;
+        template_root_file->Close();
+        std::cout << "Templates written" << std::endl;
     }
 }
 Double_t get_baseline( std::vector<Double_t> &vec , CONF &conf_object)
