@@ -365,7 +365,7 @@ int main(int argc, char **argv)
 	            } //end of channels
             }//end of calohit
             event_num ++;
-            if (event_num == 10000 && !do_template){ break; }
+            if (event_num == 1000000 && !do_template){ break; }
         }   //end of file
     
         std::clog<<"Events processed : " << rtd_counter<< " entries" << std::endl;
