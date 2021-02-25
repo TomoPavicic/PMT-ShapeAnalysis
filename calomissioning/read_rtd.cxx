@@ -65,6 +65,7 @@ std::vector<std::vector<Double_t>> get_template_pulses( std::string template_fil
 void update_temp_vector( std::vector<std::vector<Double_t>> &template_vectors, std::vector<Double_t> new_vector,
                          TEMP_INFO tempInfo, Int_t OM_ID, CONF &config_object );
 Int_t get_peak_cell( std::vector<Double_t> &vec );
+Double_t get_amplitude( std::vector<Double_t> &vec );
 void write_templates( std::vector<std::vector<Double_t>> &template_vectors );
 Double_t get_baseline( std::vector<Double_t> &vec , CONF &conf_object);
 Int_t get_max_value( std::vector<Double_t> &vec );
@@ -262,7 +263,7 @@ int main(int argc, char **argv)
             int32_t trigger_id = rtd.get_trigger_id();
             int32_t run_id     = rtd.get_run_id();
       
-            if(rtd_counter %1000 == 0 )std::clog<<"In Run : "<<run_id<<" Trigger # "<<trigger_id <<std::endl;
+            if(rtd_counter %10000 == 0 )std::clog<<"In Run : "<<run_id<<" Trigger # "<<trigger_id <<std::endl;
       
             std::size_t calo_counter = 0;
             // Loop on calo hit records in the RTD data object:
@@ -322,50 +323,50 @@ int main(int argc, char **argv)
 	                    OM_ID = row + column*13;
 	                    // Double_t energy_t = -1.0 * (Double_t)ch_charge * energy_coefs[OM_ID];
 
-	                    if (ch_charge < -100)
+	                    uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
+	                    // std::vector<Double_t> waveform_adc;
+	                    for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
 	                    {
-	                        amplitude = ch_peak;
-	                        baseline  = ch_baseline;
-	                        charge    = ch_charge;
-	                        wall_num = crate_num;
-	                        eventn.OM_ID = OM_ID;
-	                        eventn.col = column;
-	                        eventn.row = row;
-	                        eventn.wall = crate_num;
-	                        eventn.ID = event_num;
+	                        uint16_t adc = calo_hit.get_waveforms().get_adc(isample,ichannel);
+	                        waveform.push_back((Double_t)adc);
+	                    }
+	                    Double_t my_baseline    = get_baseline( waveform , config_object);
+	                    Double_t my_amplitude   = get_amplitude( waveform ) - my_baseline;
 
-	                        uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
-	                        // std::vector<Double_t> waveform_adc;
+	                    amplitude       = my_amplitude;
+	                    baseline        = my_baseline;
+	                    charge          = ch_charge;
+	                    wall_num        = crate_num;
+	                    eventn.OM_ID    = OM_ID;
+	                    eventn.col      = column;
+	                    eventn.row      = row;
+	                    eventn.wall     = crate_num;
+	                    eventn.ID       = event_num;
+
+	                    if ( do_template )
+	                    {
+	                        if ( amplitude > -100 ){ continue; }
+	                        if ( average_counter[OM_ID] > n_average ){ continue; }
+	                        std::vector<Double_t> temp_vector;
 	                        for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
 	                        {
-	                            uint16_t adc = calo_hit.get_waveforms().get_adc(isample,ichannel);
-	                            waveform.push_back((Double_t)adc);
+	                            temp_vector.push_back( waveform[isample] - baseline );
 	                        }
-	                        Double_t my_baseline = get_baseline( waveform , config_object);
+	                        update_temp_vector( template_vectors, temp_vector, template_info, OM_ID,
+	                                config_object );
+	                        average_counter[OM_ID]++;
+	                    }else{
+                            if ( amplitude > -50 ){ continue; }
+                            matchfilter = sweep(waveform, config_object, my_baseline, template_vectors[OM_ID]);
+	                        tree.Fill();
+	                    }
+	                    //std::cout<< "Tree fill" << std::endl;
 
-	                        if ( do_template )
-	                        {
-	                            if ( average_counter[OM_ID] > n_average ){ continue; }
-	                            std::vector<Double_t> temp_vector;
-	                            for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
-	                            {
-	                                temp_vector.push_back( waveform[isample] - baseline );
-	                            }
-	                            update_temp_vector( template_vectors, temp_vector, template_info, OM_ID,
-	                                    config_object );
-	                            average_counter[OM_ID]++;
-	                        }else{
-	                            matchfilter = sweep(waveform, config_object, my_baseline, template_vectors[OM_ID]);
-                                tree.Fill();
-	                        }
-	                        //std::cout<< "Tree fill" << std::endl;
-
-                        }
 	                }
 	            } //end of channels
             }//end of calohit
             event_num ++;
-            if (event_num == 1000000 && !do_template){ break; }
+            if (event_num == 100000 && !do_template){ break; }
         }   //end of file
     
         std::clog<<"Events processed : " << rtd_counter<< " entries" << std::endl;
@@ -486,6 +487,18 @@ Int_t get_peak_cell( std::vector<Double_t> &vec )
         }
     }
     return peak_cell;
+}
+Double_t get_amplitude( std::vector<Double_t> &vec )
+{
+    Double_t amplitude = vec[0];
+    for ( Int_t i = 0 ; i < (Int_t)vec.size() ; i++ )
+    {
+        if ( vec[i] < amplitude )
+        {
+            amplitude = vec[i];
+        }
+    }
+    return amplitude;
 }
 void write_templates( std::vector<std::vector<Double_t>> &template_vectors )
 {
