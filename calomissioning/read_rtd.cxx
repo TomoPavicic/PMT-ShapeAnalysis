@@ -351,7 +351,7 @@ int main(int argc, char **argv)
                             wall = calo_id.get_wall();
                             column = calo_id.get_column();
                             OM_ID = 520 + 128 + side*32 + wall*16 + column;
-                            is_gveto = true
+                            is_gveto = true;
                         }
 
 	                    uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
