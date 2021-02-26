@@ -451,7 +451,7 @@ std::vector<std::vector<Double_t>> get_template_pulses( std::string template_fil
         if (norm <= 0)
         {
             std::cout << "Error: Abnormal template pulse" << std::endl;
-            exit(1);
+            continue;
         }
 
         for (int ivec = 0 ; ivec < (Int_t)temp_vector.size() ;  ivec++)
