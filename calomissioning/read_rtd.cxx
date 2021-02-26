@@ -172,6 +172,12 @@ int main(int argc, char **argv)
 
         TEMP_INFO template_info;
         std::vector<int> average_counter(template_info.n_templates,0);
+        std::vector<std::vector<int>> om_counter;
+        for (int l = 0; l < 3; ++l) {
+            std::vector<int> om_vector(2,0);
+            om_counter.push_back(om_vector);
+        }
+        int n_stop = 10000;
         int n_average = 1000;
         std::vector<std::vector<Double_t>> template_vectors;
         if ( do_template )
@@ -337,6 +343,7 @@ int main(int argc, char **argv)
                             row = calo_id.get_row();
                             OM_ID = row + column*13 + side*260;
                             is_main = true;
+                            if (om_counter[0][side] >= n_stop){ continue; }
                         }
                         else if (calo_id.is_xwall()) {
                             side = calo_id.get_side();
@@ -345,6 +352,7 @@ int main(int argc, char **argv)
                             row = calo_id.get_row();
                             OM_ID = 520 + side*64 + wall*32  + column*16 + row;
                             is_xwall = true;
+                            if (om_counter[1][side] >= n_stop){ continue; }
                         }
                         else if (calo_id.is_gveto()) {
                             side = calo_id.get_side();
@@ -352,6 +360,7 @@ int main(int argc, char **argv)
                             column = calo_id.get_column();
                             OM_ID = 520 + 128 + side*32 + wall*16 + column;
                             is_gveto = true;
+                            if (om_counter[2][side] >= n_stop){ continue; }
                         }
 
 	                    uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
@@ -397,7 +406,9 @@ int main(int argc, char **argv)
 	            } //end of channels
             }//end of calohit
             event_num ++;
-            if (event_num == 100000 && !do_template){ break; }
+            //if (event_num == 100000 && !do_template){ break; }
+            if ( om_counter[0][0] >= n_stop && om_counter[0][1] >= n_stop && om_counter[1][0] >= n_stop &&
+                om_counter[1][1] >= n_stop && om_counter[2][0] >= n_stop && om_counter[2][1] >= n_stop){ break; }
         }   //end of file
     
         std::clog<<"Events processed : " << rtd_counter<< " entries" << std::endl;
