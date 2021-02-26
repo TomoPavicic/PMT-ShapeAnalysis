@@ -177,7 +177,7 @@ int main(int argc, char **argv)
             std::vector<int> om_vector(2,0);
             om_counter.push_back(om_vector);
         }
-        int n_stop = 10000;
+        int n_stop = 1000000;
         int n_average = 1000;
         std::vector<std::vector<Double_t>> template_vectors;
         if ( do_template )
@@ -245,9 +245,9 @@ int main(int argc, char **argv)
         tree.Branch("apulse_times",&matchfilter.apulse_times);
         tree.Branch("apulse_amplitudes",&matchfilter.apulse_amplitudes);
         tree.Branch("apulse_shapes",&matchfilter.apulse_shapes);
-        tree.Branch("mf_amplitudes",&matchfilter.mf_amps);
-        tree.Branch("mf_shapes",&matchfilter.mf_shapes);
-        tree.Branch("waveform",&waveform);
+        //tree.Branch("mf_amplitudes",&matchfilter.mf_amps);
+        //tree.Branch("mf_shapes",&matchfilter.mf_shapes);
+        //tree.Branch("waveform",&waveform);
 
         bool cont = true;
 
