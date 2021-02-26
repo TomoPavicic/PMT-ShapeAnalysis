@@ -264,6 +264,8 @@ int main(int argc, char **argv)
 
         event_num = 0;
 
+        int my_class;
+
         EVENTN eventn;
 
         std::size_t rtd_counter = 0;
@@ -343,7 +345,8 @@ int main(int argc, char **argv)
                             row = calo_id.get_row();
                             OM_ID = row + column*13 + side*260;
                             is_main = true;
-                            if (om_counter[0][side] >= n_stop){ continue; }
+                            my_class = 0;
+
                         }
                         else if (calo_id.is_xwall()) {
                             side = calo_id.get_side();
@@ -352,7 +355,7 @@ int main(int argc, char **argv)
                             row = calo_id.get_row();
                             OM_ID = 520 + side*64 + wall*32  + column*16 + row;
                             is_xwall = true;
-                            if (om_counter[1][side] >= n_stop){ continue; }
+                            my_class = 1;
                         }
                         else if (calo_id.is_gveto()) {
                             side = calo_id.get_side();
@@ -360,8 +363,9 @@ int main(int argc, char **argv)
                             column = calo_id.get_column();
                             OM_ID = 520 + 128 + side*32 + wall*16 + column;
                             is_gveto = true;
-                            if (om_counter[2][side] >= n_stop){ continue; }
+                            my_class = 2;
                         }
+                        if (om_counter[my_class][side] >= n_stop){ continue; }
 
 	                    uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
 	                    // std::vector<Double_t> waveform_adc;
@@ -397,6 +401,7 @@ int main(int argc, char **argv)
 	                        average_counter[OM_ID]++;
 	                    }else{
                             if ( amplitude > -50 ){ continue; }
+                            om_counter[my_class][side] ++;
                             matchfilter = sweep(waveform, config_object, my_baseline, template_vectors[OM_ID]);
 	                        tree.Fill();
 	                    }
