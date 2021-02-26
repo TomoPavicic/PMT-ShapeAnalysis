@@ -42,6 +42,7 @@ typedef struct {
     Int_t low_edge = 10;
     Int_t high_edge = 40;
     Int_t temp_length = 50;
+    Int_t n_templates = 728;
 } TEMP_INFO;
 
 typedef struct {
@@ -167,16 +168,15 @@ int main(int argc, char **argv)
 
         std::clog<<"Input file name : "<<input_file_name<<std::endl;
 
-        std::vector<int> average_counter(260,0);
-        int n_average = 1000;
-
         // std::vector<Double_t> energy_coefs = read_energy_coef("/sps/nemo/scratch/wquinn/PMT-ShapeAnalysis/calomissioning/energy_coefs.csv");
 
         TEMP_INFO template_info;
+        std::vector<int> average_counter(template_info.n_templates,0);
+        int n_average = 1000;
         std::vector<std::vector<Double_t>> template_vectors;
         if ( do_template )
         {
-            for (int k = 0; k < 260; ++k)
+            for (int k = 0; k < template_info.n_templates; ++k)
             {
                 std::vector<Double_t> temp(template_info.temp_length, 0.0);
                 template_vectors.push_back(temp);
@@ -194,7 +194,7 @@ int main(int argc, char **argv)
             }
 
         } else {
-            template_vectors = get_template_pulses( "templates.root", 260 );
+            template_vectors = get_template_pulses( "templates.root", template_info.n_templates );
         }
 
         sncabling::service snCabling;
@@ -211,7 +211,11 @@ int main(int argc, char **argv)
         Int_t charge;
         Int_t amplitude;
         Int_t baseline;
-        Int_t wall_num;
+        Int_t wall;
+        Int_t side;
+        bool is_gveto;
+        bool is_xwall;
+        bool is_main;
         std::vector<Double_t> waveform;
 
         CONF config_object = read_config( "/sps/nemo/scratch/wquinn/PMT-ShapeAnalysis/config_files/snemo_calo.conf" );
@@ -226,7 +230,11 @@ int main(int argc, char **argv)
         tree.Branch("charge",&charge);
         tree.Branch("baseline",&baseline);
         tree.Branch("amplitude",&amplitude);
-        tree.Branch("wall_num",&wall_num);
+        tree.Branch("wall",&wall);
+        tree.Branch("wall",&side);
+        tree.Branch("is_gveto",&is_gveto);
+        tree.Branch("is_main",&is_main);
+        tree.Branch("is_xwall",&is_xwall);
         tree.Branch("apulse_num",&matchfilter.apulse_num);
         tree.Branch("apulse_times",&matchfilter.apulse_times);
         tree.Branch("apulse_amplitudes",&matchfilter.apulse_amplitudes);
@@ -318,10 +326,33 @@ int main(int argc, char **argv)
 	                if (caloSignalCabling.has_channel(readout_id))
 	                {
 	                    const sncabling::om_id & calo_id = caloSignalCabling.get_om(readout_id);
-	                    row = calo_id.get_row();
-	                    column = calo_id.get_column();
-	                    OM_ID = row + column*13;
-	                    // Double_t energy_t = -1.0 * (Double_t)ch_charge * energy_coefs[OM_ID];
+
+	                    is_main = false;
+	                    is_gveto = false;
+	                    is_xwall = false;
+
+                        if (calo_id.is_main()) {
+                            side = calo_id.get_side();
+                            column = calo_id.get_column();
+                            row = calo_id.get_row();
+                            OM_ID = row + column*13 + side*260;
+                            is_main = true;
+                        }
+                        else if (calo_id.is_xwall()) {
+                            side = calo_id.get_side();
+                            wall = calo_id.get_wall();
+                            column = calo_id.get_column();
+                            row = calo_id.get_row();
+                            OM_ID = 520 + side*64 + wall*32  + column*16 + row;
+                            is_xwall = true;
+                        }
+                        else if (calo_id.is_gveto()) {
+                            side = calo_id.get_side();
+                            wall = calo_id.get_wall();
+                            column = calo_id.get_column();
+                            OM_ID = 520 + 128 + side*32 + wall*16 + column;
+                            is_gveto = true
+                        }
 
 	                    uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
 	                    // std::vector<Double_t> waveform_adc;
@@ -336,7 +367,7 @@ int main(int argc, char **argv)
 	                    amplitude       = my_amplitude;
 	                    baseline        = my_baseline;
 	                    charge          = ch_charge;
-	                    wall_num        = crate_num;
+	                    wall            = crate_num;
 	                    eventn.OM_ID    = OM_ID;
 	                    eventn.col      = column;
 	                    eventn.row      = row;
