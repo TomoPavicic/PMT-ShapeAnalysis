@@ -547,6 +547,13 @@ void write_templates( std::vector<std::vector<Double_t>> &template_vectors )
         if ( norm == 0 )
         {
             std::cout << ">>> Normalised template vector : " << i_temp << " is 0" << std::endl;
+            for (int j_bin = 1; j_bin < (Int_t)template_vectors[i_temp].size() + 1; ++j_bin)
+            {
+                hist->SetBinContent(j_bin, template_vectors[i_temp][j_bin - 1]);
+                std::cout << j_bin - 1 << " " << template_vectors[i_temp][j_bin - 1] << std::endl;
+            }
+            hist->Write();
+            delete hist;
             continue;
         }
 
