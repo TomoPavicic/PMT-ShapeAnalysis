@@ -2,6 +2,10 @@
 #include <iostream>
 #include <exception>
 #include <cstdlib>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <cmath>
 
 
 #include "TFile.h"
@@ -12,6 +16,7 @@
 #include "TCanvas.h"
 #include "TStyle.h"
 #include "TLegend.h"
+#include "TF1.h"
 
 
 #include <snfee/snfee.h>
@@ -30,25 +35,54 @@
 #include <sncabling/calo_signal_cabling.h>
 
 typedef struct {
-    Int_t OM_ID, row, col, wall, ID;
+    Int_t OM_ID;
+    Double_t charge, baseline, amplitude;
+    bool is_main, is_xwall, is_gveto, is_fr, is_it;
 } EVENTN;
 
 typedef struct {
-    Int_t low_edge = 30;
-    Int_t high_edge = 100;
-    Int_t temp_length = 130;
+    Int_t low_edge = 10;
+    Int_t high_edge = 40;
+    Int_t temp_length = 50;
+    Int_t n_templates = 728;
 } TEMP_INFO;
+
+typedef struct {
+    Int_t apulse_num;
+    std::vector<Int_t> apulse_times;
+    std::vector<Double_t> apulse_amplitudes;
+    std::vector<Double_t> apulse_shapes;
+    std::vector<Double_t> mf_shapes;
+    std::vector<Double_t> mf_amps;
+} MATCHFILTER;
+
+typedef struct {
+    Int_t sweep_start, pre_trigger, trigger, trig_tolerance, apulse_time_cut;
+    Double_t shape_cut, amp_cut, charge_cut, resistance;
+    std::vector<Double_t> integration;
+    std::string template_file;
+} CONF;
 
 Double_t get_inner_product( std::vector<Double_t> &vec1, std::vector<Double_t> &vec2 );
 std::vector<std::vector<Double_t>> get_template_pulses( std::string template_file , Int_t n_temp );
-void update_temp_vector( std::vector<std::vector<Double_t>> &template_vectors, std::vector<Double_t> new_vector, Int_t OM_ID );
+void update_temp_vector( std::vector<std::vector<Double_t>> &template_vectors, std::vector<Double_t> new_vector,
+                         TEMP_INFO tempInfo, Int_t OM_ID, CONF &config_object );
 Int_t get_peak_cell( std::vector<Double_t> &vec );
+Double_t get_amplitude( std::vector<Double_t> &vec );
 void write_templates( std::vector<std::vector<Double_t>> &template_vectors );
-Double_t get_baseline( std::vector<Double_t> &vec );
+Double_t get_baseline( std::vector<Double_t> &vec , CONF &conf_object);
 Int_t get_max_value( std::vector<Double_t> &vec );
-void draw_waveform( std::vector<Double_t> &vec, Int_t n_samples, Double_t baseline, EVENTN &eventn, std::string output_directory);
-void draw_pulse( std::vector<Double_t> &temp, std::vector<Double_t> &test, Int_t i, Double_t convo, Double_t sample_time, EVENTN &eventn);
-void save_hist( std::vector<Double_t> &vec, std::string x_label, std::string y_label, std::string title, std::string file_name, Int_t n_bins, Double_t min_bin, Double_t max_bin, TFile* root_file);
+void draw_waveform( std::vector<Double_t> &vec, Int_t n_samples, Double_t baseline, EVENTN &eventn,
+        std::string output_directory);
+void draw_pulse( std::vector<Double_t> &temp, std::vector<Double_t> &test, Int_t i, Double_t convo,
+        Double_t sample_time, EVENTN &eventn);
+void save_hist( std::vector<Double_t> &vec, std::string x_label, std::string y_label, std::string title,
+        std::string file_name, Int_t n_bins, Double_t min_bin, Double_t max_bin, TFile* root_file);
+Double_t get_pulse_time_mf(std::vector<Double_t> &vec);
+std::vector<Double_t> read_energy_coef( std::string filename );
+std::vector<std::string> split( const std::string& s, char delimiter );
+CONF read_config( std::string filename );
+MATCHFILTER sweep( std::vector<Double_t> &vec, CONF &config, Double_t baseline, std::vector<Double_t>& temp );
 
 bool debug = true;
 
@@ -65,8 +99,8 @@ void usage()
     std::clog<<">>> -i  -  std::string /input/file/path/.gz "<<std::endl;
     std::clog<<">>> -o  -  std::string /output/file/path/.root "<<std::endl;
     std::clog<<">>> -t  -  BOOL create template, def:false "<<std::endl;
-    std::clog<<">>> -OM -  INT def: 1000 (no plots), chosen OM to plot examples "<<std::endl;
-    std::clog<<">>> -W  -  BOOL analyse waveforms def:false "<<std::endl;
+    //std::clog<<">>> -OM -  INT def: 1000 (no plots), chosen OM to plot examples "<<std::endl;
+    //std::clog<<">>> -W  -  BOOL analyse waveforms def:false "<<std::endl;
     std::clog<<std::endl;
 }
 
@@ -79,8 +113,8 @@ int main(int argc, char **argv)
 
     std::string input_file_name, output_file_name;
     bool do_template = false;
-    int chosen_OM = 1000;
-    bool do_waveforms = false;
+    //int chosen_OM = 1000;
+    //bool do_waveforms = false;
 
     try {
     
@@ -112,19 +146,6 @@ int main(int argc, char **argv)
                         do_template = false;
                     }
                 }
-                else if ( s == "-OM" )
-                {
-                    chosen_OM = std::stoi(argv[i+1]);
-                }
-                else if ( s == "-W" )
-                {
-                    if ( std::string(argv[i+1]) == "true" )
-                    {
-                        do_waveforms = true;
-                    }else{
-                        do_waveforms = false;
-                    }
-                }
 	        }
         }
     
@@ -136,11 +157,35 @@ int main(int argc, char **argv)
 
         std::clog<<"Input file name : "<<input_file_name<<std::endl;
 
+        // std::vector<Double_t> energy_coefs = read_energy_coef("/sps/nemo/scratch/wquinn/PMT-ShapeAnalysis/calomissioning/energy_coefs.csv");
+
+        // The templates will have some specific construction. Store in a STRUCT
         TEMP_INFO template_info;
+
+        // Define some counters
+        std::vector<int> average_counter(template_info.n_templates,0);
+        std::vector<std::vector<int>> om_counter;
+        for (int l = 0; l < 3; ++l) {
+            std::vector<int> om_vector(2,0);
+            om_counter.push_back(om_vector);
+        } // I don't know of  a better way to initialise
+
+        // Define how many events per category (my_class) you wish,
+        // Categories: MWALL = 0, XWALL = 1, GVETO = 2
+        int n_stop = 1000000;
+        int my_class;
+
+        // Defien how many waveforms you want to use in the template averaging
+        // The more you use the more the noise is smeared out
+        int n_average = 1000;
+
+        // Initialise template vectors container
+        // If you are creating them, set the vectors to be of the size in TEMP_INFO of ZEROS
+        // Else read them from the file in the same directory called "templates.root"
         std::vector<std::vector<Double_t>> template_vectors;
         if ( do_template )
         {
-            for (int k = 0; k < 260; ++k)
+            for (int k = 0; k < template_info.n_templates; ++k)
             {
                 std::vector<Double_t> temp(template_info.temp_length, 0.0);
                 template_vectors.push_back(temp);
@@ -158,55 +203,50 @@ int main(int argc, char **argv)
             }
 
         } else {
-            template_vectors = get_template_pulses( "templates.root", 260 );
+            template_vectors = get_template_pulses( "templates.root", template_info.n_templates );
         }
 
         sncabling::service snCabling;
         snCabling.initialize_simple();
+
         // Access to the calorimeter signal readout cabling map:
         const sncabling::calo_signal_cabling & caloSignalCabling = snCabling.get_calo_signal_cabling();
 
+        // Read the config file and store the variables in the CONF object
+        CONF config_object = read_config( "/sps/nemo/scratch/wquinn/PMT-ShapeAnalysis/config_files/snemo_calo.conf" );
+
+        // Output ntuple creation and setup
         TFile* output_file = new TFile(output_file_name.c_str(), "RECREATE");
+
+        // Contains event info
+        EVENTN eventn;
     
         Int_t event_num;
-        Int_t row;
-        Int_t column;
-        Int_t OM_ID;
-        Int_t charge;
-        Int_t amplitude;
-        Int_t baseline;
-        Double_t fall_time;
-        Double_t rise_time;
-        Double_t peak_time;
-        Int_t calo_hit_num;
-        Int_t calo_tdc;
-        Int_t run_num;
-        Int_t wall_num;
-        Int_t trig_id;
-        Int_t calo_time;
-        std::vector<uint16_t> waveform;
+        std::vector<Double_t> waveform;
 
-        // Create a ROOT Tree
+        MATCHFILTER matchfilter;
+
         TTree tree("T","Tree containing simulated vertex data");
         tree.Branch("event_num",&event_num);
-        tree.Branch("row",&row);
-        tree.Branch("column",&column);
         tree.Branch("OM_ID",&OM_ID);
-        tree.Branch("charge",&charge);
-        tree.Branch("baseline",&baseline);
-        tree.Branch("amplitude",&amplitude);
-        tree.Branch("rise_time",&rise_time);
-        tree.Branch("fall_time",&fall_time);
-        tree.Branch("peak_time",&peak_time);
-        tree.Branch("calo_hit_num",&calo_hit_num);
-        tree.Branch("calo_tdc",&calo_tdc);
-        tree.Branch("run_num",&run_num);
-        tree.Branch("wall_num",&wall_num);
-        tree.Branch("trig_id",&trig_id);
-        tree.Branch("calo_time",&calo_time);
-        //tree.Branch("waveform",&waveform);
+        tree.Branch("charge",&event_n.charge);
+        tree.Branch("baseline",&eventn.baseline);
+        tree.Branch("amplitude",&eventn.amplitude);
+        tree.Branch("is_gveto",&eventn.is_gveto);
+        tree.Branch("is_main",&eventn.is_main);
+        tree.Branch("is_xwall",&eventn.is_xwall);
+        tree.Branch("is_fr",&eventn.is_fr);
+        tree.Branch("is_it",&eventn.is_it);
+        tree.Branch("apulse_num",&matchfilter.apulse_num);
+        tree.Branch("apulse_times",&matchfilter.apulse_times);
+        tree.Branch("apulse_amplitudes",&matchfilter.apulse_amplitudes);
+        tree.Branch("apulse_shapes",&matchfilter.apulse_shapes);
 
-        bool cont = true;
+        // These next three branches should be uncommented if you wish to store the waveform and
+        // MF outputs - WARNING takes up a lot of storage space. I recommend only for testing and plots
+        //tree.Branch("mf_amplitudes",&matchfilter.mf_amps);
+        //tree.Branch("mf_shapes",&matchfilter.mf_shapes);
+        //tree.Branch("waveform",&waveform);
 
         // Configuration for raw data reader
         snfee::io::multifile_data_reader::config_type reader_cfg;
@@ -220,8 +260,6 @@ int main(int argc, char **argv)
         snfee::data::raw_trigger_data rtd;
 
         event_num = 0;
-
-        EVENTN eventn;
 
         std::size_t rtd_counter = 0;
         while ( rtd_source.has_record_tag() )
@@ -246,21 +284,15 @@ int main(int argc, char **argv)
 	            uint64_t tdc             = calo_hit.get_tdc();        // TDC timestamp (48 bits)
 	            int32_t  crate_num       = calo_hit.get_crate_num();  // Crate number (0,1,2)
 	            int32_t  board_num       = calo_hit.get_board_num();  // Board number (0-19)
-	            if (board_num >= 10){ board_num++; };                 // convert board_num  from [10-19] to [11-20]
+	            //if (board_num >= 10){ board_num++; };                 // OLD convert board_num  from [10-19] to [11-20]
 	            int32_t  chip_num        = calo_hit.get_chip_num();   // Chip number (0-7)
 	            auto     hit_num         = calo_hit.get_hit_num();
-
-                /*
-                if(rtd_counter < 100 ){
-                  std::clog<<"   |-> tdc      : "<< tdc <<std::endl;
-                  std::clog<<"   |-> calo data from CaloFEB : "<<crate_num<<"."<<board_num<<"."<<chip_num<<std::endl;
-                }
-                */
 
 	            // Extract SAMLONG channels' data:
 	            // 2 channels per SAMLONG
 	            for (int ichannel = 0; ichannel < snfee::model::feb_constants::SAMLONG_NUMBER_OF_CHANNELS; ichannel++)
 	            {
+                    waveform.clear();
 	                const snfee::data::calo_hit_record::channel_data_record & ch_data = calo_hit.get_channel_data(ichannel);
 	                bool    ch_lt           {ch_data.is_lt()};            // Low threshold flag
 	                bool    ch_ht           {ch_data.is_ht()};            // High threshold flag
@@ -271,130 +303,110 @@ int main(int argc, char **argv)
 	                int32_t ch_rising_cell  {ch_data.get_rising_cell()};  // Computed rising cell
 	                int32_t ch_falling_cell {ch_data.get_falling_cell()}; // Computed falling cell
 
-	                Double_t ch_rising_cell_  = Double_t(ch_rising_cell);
+	                // The following is commented out but kept here for
+	                // how to calculate true variables from the ones stored in data
+	                /*Double_t ch_rising_cell_  = Double_t(ch_rising_cell);
 	                Double_t ch_falling_cell_ = Double_t(ch_falling_cell);
 	                Double_t ch_peak_cell_    = Double_t(ch_peak_cell);
 
 	                Double_t rising_actual    = (ch_rising_cell_*6.25)/256.0;
 	                Double_t falling_actual   = (ch_falling_cell_*6.25)/256.0;
-	                Double_t peak_actual      = ch_peak_cell_*6.25/8.0;
+	                Double_t peak_actual      = ch_peak_cell_*6.25/8.0;*/
+	                //
 
 	                sncabling::calo_signal_id readout_id(sncabling::CALOSIGNAL_CHANNEL,
 	                        crate_num, board_num,
 	                        snfee::model::feb_constants::SAMLONG_NUMBER_OF_CHANNELS * chip_num + ichannel);
-
 	  
 	                if (caloSignalCabling.has_channel(readout_id))
 	                {
-	                    if (ch_ht)
-	                    {
-		                    const sncabling::om_id & calo_id = caloSignalCabling.get_om(readout_id);
+	                    const sncabling::om_id & calo_id = caloSignalCabling.get_om(readout_id);
 
-		                    row = calo_id.get_row();
-		                    column = calo_id.get_column();
-		                    OM_ID = row + column*13;
-                            amplitude = ch_peak;
-                            baseline  = ch_baseline;
-                            charge    = ch_charge;
-                            rise_time = rising_actual;
-                            fall_time = falling_actual;
-                            peak_time = peak_actual;
-                            calo_hit_num = hit_num;
-                            calo_tdc = tdc;
-                            run_num = run_id;
-                            wall_num = crate_num;
-                            trig_id = trigger_id;
+	                    eventn.is_main = false;
+	                    eventn.is_gveto = false;
+	                    eventn.is_xwall = false;
+	                    eventn.is_fr = false;
+	                    eventn.is_it = false;
 
-                            eventn.OM_ID = OM_ID;
-                            eventn.col = column;
-                            eventn.row = row;
-                            eventn.wall = crate_num;
-                            eventn.ID = event_num;
-
-                            calo_time = -1000.0;
-
-                            if (do_waveforms)
-                            {
-                                if ( ch_peak_cell > 1024 - 160){ continue; }
-                                if ( chosen_OM == 1000 ){} else if ( OM_ID != chosen_OM ){ continue; }
-
-                                uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
-                                std::vector<Double_t> waveform_adc;
-                                for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
-                                {
-                                    uint16_t adc = calo_hit.get_waveforms().get_adc(isample,ichannel);
-                                    waveform_adc.push_back((Double_t)adc);
-                                }
-                                Double_t my_baseline = get_baseline( waveform_adc );
-
-                                if (do_template)
-                                {
-                                    if ( charge >= -25000 && ch_charge < -20000 )
-                                    {
-                                        std::vector<Double_t> temp_vector;
-                                        for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
-                                        {
-                                            temp_vector.push_back( waveform_adc[isample] - baseline );
-                                        }
-                                        update_temp_vector( template_vectors, temp_vector, OM_ID );
-                                    }
-
-                                } else {
-                                    Int_t n_try = 50;
-                                    std::vector<Double_t> mf_output;
-                                    Double_t norm_temp = sqrt( get_inner_product( template_vectors[OM_ID], template_vectors[OM_ID] ) );
-
-                                    for (int i = 0; i < n_try; ++i)
-                                    {
-                                        std::vector<Double_t> temp_vector;
-
-                                        for (uint16_t isample = ch_peak_cell - 30 - n_try/2 + i; isample < ch_peak_cell + 100 - n_try/2 + i; isample++)
-                                        {
-                                            Double_t volts = (Double_t)waveform_adc[isample] - my_baseline;
-                                            temp_vector.push_back( volts );
-                                        }
-
-                                        Double_t norm_test = sqrt( get_inner_product( temp_vector, temp_vector ) );
-                                        Double_t mf = get_inner_product( temp_vector, template_vectors[OM_ID] )/( norm_temp * norm_test );
-
-                                        mf_output.push_back(mf);
-
-                                        if ( chosen_OM == 1000 ){} else if (OM_ID == chosen_OM)
-                                        {
-                                            draw_pulse(template_vectors[OM_ID], temp_vector, i, mf,
-                                                    (ch_peak_cell - 30 - n_try/2 + i)/2.56, eventn);
-                                        }
-                                    }
-                                    /*save_hist(mf_output,"Sample window time /ns","shape index","Pulse_time_finder",
-                                                "mf_output_" + std::to_string(OM_ID) + ".png",n_try,
-                                                (ch_peak_cell - 30 - n_try/2)/2.56 ,
-                                                (ch_peak_cell - 30 + n_try/2)/2.56, output_file);*/
-
-                                    if ( chosen_OM == 1000 ){} else if (OM_ID == chosen_OM)
-                                    {
-                                        draw_waveform(waveform_adc, waveform_number_of_samples, my_baseline, eventn, output_file_name);
-                                        return 1;
-                                    }
-
-                                    calo_time = get_max_value(mf_output) + ch_peak_cell - 30 - n_try/2;
-                                }
-                                //waveform = temp_vector;
-
-                            } else {}
-                            tree.Fill();
+                        if (calo_id.is_main()) {
+                            side = calo_id.get_side();
+                            eventn.col = calo_id.get_column();
+                            eventn.row = calo_id.get_row();
+                            eventn.OM_ID = row + column*13 + side*260;
+                            is_main = true;
+                            my_class = 0;
                         }
+                        else if (calo_id.is_xwall()) {
+                            side = calo_id.get_side();
+                            wall = calo_id.get_wall();
+                            column = calo_id.get_column();
+                            row = calo_id.get_row();
+                            OM_ID = 520 + side*64 + wall*32  + column*16 + row;
+                            is_xwall = true;
+                            my_class = 1;
+                        }
+                        else if (calo_id.is_gveto()) {
+                            side = calo_id.get_side();
+                            wall = calo_id.get_wall();
+                            column = calo_id.get_column();
+                            OM_ID = 520 + 128 + side*32 + wall*16 + column;
+                            is_gveto = true;
+                            my_class = 2;
+                        }
+                        if (om_counter[my_class][side] >= n_stop){ continue; }
+
+                        if ( side == 1 ){ eventn.is_fr = true; }
+                        else{ eventn.is_it = true; }
+
+	                    uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
+	                    // std::vector<Double_t> waveform_adc;
+	                    for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
+	                    {
+	                        uint16_t adc = calo_hit.get_waveforms().get_adc(isample,ichannel);
+	                        waveform.push_back((Double_t)adc);
+	                    }
+	                    Double_t my_baseline    = get_baseline( waveform , config_object);
+	                    Double_t my_amplitude   = get_amplitude( waveform ) - my_baseline;
+
+	                    eventn.amplitude       = my_amplitude;
+	                    eventn.baseline        = my_baseline;
+	                    eventn.charge          = ch_charge;
+	                    eventn.OM_ID           = OM_ID;
+
+	                    if ( do_template )
+	                    {
+	                        if ( amplitude > -100 ){ continue; }
+	                        if ( average_counter[OM_ID] > n_average ){ continue; }
+	                        std::vector<Double_t> temp_vector;
+	                        for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
+	                        {
+	                            temp_vector.push_back( waveform[isample] - baseline );
+	                        }
+	                        update_temp_vector( template_vectors, temp_vector, template_info, OM_ID,
+	                                config_object );
+	                        average_counter[OM_ID]++;
+	                    }else{
+                            if ( amplitude > -50 ){ continue; }
+                            om_counter[my_class][side] ++;
+                            matchfilter = sweep(waveform, config_object, my_baseline, template_vectors[OM_ID]);
+	                        tree.Fill();
+	                    }
+
 	                }
 	            } //end of channels
             }//end of calohit
             event_num ++;
+            if ( om_counter[0][0] >= n_stop && om_counter[0][1] >= n_stop && om_counter[1][0] >= n_stop &&
+                om_counter[1][1] >= n_stop && om_counter[2][0] >= n_stop && om_counter[2][1] >= n_stop){ break; }
         }   //end of file
     
         std::clog<<"Events processed : " << rtd_counter<< " entries" << std::endl;
         output_file->cd();
         output_file->Write();
         output_file->Close();
+        std::cout << "File closed" << std::endl;
 
-        //write_templates( template_vectors );
+        if ( do_template ){ write_templates( template_vectors ); }
 
     } catch (std::exception & error)
     {
@@ -408,6 +420,7 @@ int main(int argc, char **argv)
 
 std::vector<std::vector<Double_t>> get_template_pulses( std::string template_file , Int_t n_temp )
 {
+    std::cout << "get_template_pulses" << std::endl;
     std::vector<std::vector<Double_t>> template_pulses;
     std::cout << std::endl;
     std::cout << "Template file name : " << template_file << std::endl;
@@ -438,7 +451,7 @@ std::vector<std::vector<Double_t>> get_template_pulses( std::string template_fil
         if (norm <= 0)
         {
             std::cout << "Error: Abnormal template pulse" << std::endl;
-            exit(1);
+            continue;
         }
 
         for (int ivec = 0 ; ivec < (Int_t)temp_vector.size() ;  ivec++)
@@ -471,23 +484,22 @@ Double_t get_inner_product( std::vector<Double_t> &vec1, std::vector<Double_t> &
     }
     return inner_product;
 }
-void update_temp_vector( std::vector<std::vector<Double_t>> &template_vectors, std::vector<Double_t> new_vector, Int_t OM_ID )
+void update_temp_vector( std::vector<std::vector<Double_t>> &template_vectors, std::vector<Double_t> new_vector,
+        TEMP_INFO tempInfo, Int_t OM_ID, CONF &config_object )
 {
-    Int_t temp_length = 130;
     Int_t peak_cell = get_peak_cell( new_vector );
 
-    Int_t lower_edge = 30;
-    Int_t higher_edge = 100;
-
-    Double_t my_baseline = get_baseline( new_vector );
+    Double_t my_baseline = get_baseline( new_vector , config_object );
 
     Int_t j = 0;
-    for (Int_t i = peak_cell - lower_edge; i < peak_cell + higher_edge; ++i)
+    //std::cout << "OM_ID: " << OM_ID << " Update vector" << std::endl;
+    for (Int_t i = peak_cell - tempInfo.low_edge; i < peak_cell + tempInfo.high_edge; ++i)
     {
         template_vectors[OM_ID][j] += new_vector[i] - my_baseline;
         j++;
+        //std::cout << "(" << j << "," << template_vectors[OM_ID][j] << ")" << std::endl;
 
-        if ( j == temp_length )
+        if ( j == tempInfo.temp_length )
         {
             break;
         }
@@ -507,6 +519,18 @@ Int_t get_peak_cell( std::vector<Double_t> &vec )
     }
     return peak_cell;
 }
+Double_t get_amplitude( std::vector<Double_t> &vec )
+{
+    Double_t amplitude = vec[0];
+    for ( Int_t i = 0 ; i < (Int_t)vec.size() ; i++ )
+    {
+        if ( vec[i] < amplitude )
+        {
+            amplitude = vec[i];
+        }
+    }
+    return amplitude;
+}
 void write_templates( std::vector<std::vector<Double_t>> &template_vectors )
 {
     TFile* template_root_file = new TFile("templates.root", "RECREATE");
@@ -523,6 +547,13 @@ void write_templates( std::vector<std::vector<Double_t>> &template_vectors )
         if ( norm == 0 )
         {
             std::cout << ">>> Normalised template vector : " << i_temp << " is 0" << std::endl;
+            for (int j_bin = 1; j_bin < (Int_t)template_vectors[i_temp].size() + 1; ++j_bin)
+            {
+                hist->SetBinContent(j_bin, template_vectors[i_temp][j_bin - 1]);
+                std::cout << j_bin - 1 << " " << template_vectors[i_temp][j_bin - 1] << std::endl;
+            }
+            hist->Write();
+            delete hist;
             continue;
         }
 
@@ -534,15 +565,17 @@ void write_templates( std::vector<std::vector<Double_t>> &template_vectors )
         hist->Write();
         delete hist;
     }
+    template_root_file->Close();
+    std::cout << "Templates written" << std::endl;
 }
-Double_t get_baseline( std::vector<Double_t> &vec )
+Double_t get_baseline( std::vector<Double_t> &vec , CONF &conf_object)
 {
     Double_t baseline = 0;
-    for ( Int_t i = 0 ; i < 20 ; i++ )
+    for ( Int_t i = 0 ; i < conf_object.pre_trigger ; i++ )
     {
         baseline += vec[i];
     }
-    return (Double_t)baseline/20.0;
+    return (Double_t)baseline/(Double_t)conf_object.pre_trigger;
 }
 Int_t get_max_value( std::vector<Double_t> &vec )
 {
@@ -666,5 +699,226 @@ void save_hist( std::vector<Double_t> &vec, std::string x_label, std::string y_l
     new_canvas->SaveAs(file_name.c_str());
 
     delete new_canvas;
+}
+Double_t get_pulse_time_mf(std::vector<Double_t> &vec)
+{
+    Int_t guess_mean = get_max_value(vec);
+    Int_t lower_bound = guess_mean-5;
+    Int_t upper_bound = guess_mean+5;
+    TH1D* hist = new TH1D("h","h",upper_bound-lower_bound, lower_bound, upper_bound);
+
+    for (int i = 0; i < hist->GetNbinsX(); ++i)
+    {
+        hist->SetBinContent(i+1, vec[lower_bound + i]);
+    }
+    /* std::cout << "low: " << lower_bound << std::endl;
+    std::cout << "hig: " << upper_bound << std::endl;
+    std::cout << "NBins: " << hist->GetNbinsX() << std::endl; */
+
+    TF1 fit("fit","[0]*TMath::Gaus(x,[1],[2])",lower_bound,upper_bound);
+    fit.SetParNames("A","mu","sigma");
+
+    fit.SetParLimits(0,0,10);
+    fit.SetParLimits(1,guess_mean-1,guess_mean+1);
+    fit.SetParLimits(2,0,10);
+    fit.SetParameters(1,guess_mean,1);
+
+    hist->Fit("fit","Q");
+
+    Double_t chi2       = fit.GetChisquare()/fit.GetNDF();
+    Double_t mu         = fit.GetParameter(1);
+    Double_t mu_err     = fit.GetParError(1);
+    Double_t sigma      = fit.GetParameter(2);
+    Double_t sigma_err  = fit.GetParError(2);
+
+    delete hist;
+
+    return mu;
+}
+std::vector<Double_t> read_energy_coef( std::string filename )
+{
+    std::ifstream file(filename);
+    std::string line;
+
+    std::vector<Double_t> vec;
+    for (int i = 0; i < 260 ; ++i)
+    {
+        vec.push_back(0.0);
+    }
+
+    if (!file.good())
+    {
+        std::cout << "<<< ERROR >>> cannot open energy file : " << filename << std::endl;
+        std::cout << "EXIT" << std::endl;
+        exit(1);
+    }
+
+    while ( std::getline( file, line ) && !file.eof() )
+    {
+        if  (line.empty())
+        {
+            // Empty line so ignore
+            continue;
+        }else{
+            std::vector<std::string> line_vec = split( line, ',' );
+
+            Int_t OM = std::stoi(line_vec[0]);
+            Double_t coef = std::stod(line_vec[1]);
+            // std::cout << OM << " " << coef << std::endl;
+            vec[OM] = coef;
+        }
+    }
+
+    return vec;
+}
+std::vector<std::string> split( const std::string& s, char delimiter )
+{
+    std::vector<std::string> tokens;
+    std::string token;
+    std::istringstream tokenStream(s);
+    while (std::getline(tokenStream, token, delimiter))
+    {
+        tokens.push_back(token);
+    }
+    return tokens;
+}
+MATCHFILTER sweep( std::vector<Double_t> &vec, CONF &config, Double_t baseline, std::vector<Double_t>& temp )
+{
+    MATCHFILTER temp_mf;
+
+    // ######################################################################################
+    // Note that for the AOD we will set the sweep start to be the beginning of the waveform
+    // The config sweep start will be used as a time cut instead
+    // ######################################################################################
+
+    // Int_t sweep_start = config.sweep_start;
+    Int_t sweep_start = 0;
+    Int_t time_cut = config.sweep_start;
+    Double_t shape_cut = config.shape_cut;
+    Double_t amp_cut = config.amp_cut;
+    Int_t apulse_time_cut = config.apulse_time_cut;
+
+    // Create containers for the output amplitude and times of afterpulses after applying cuts
+    std::vector<Double_t> apulse_amp_vec;
+    std::vector<Double_t> apulse_shape_vec;
+    std::vector<Int_t> apulse_time_vec;
+
+    // Define some iterators to be used when applying cuts
+    Int_t current_apulse = 0;
+    // This defines that an afterpulse (a value rising above the cuts) must be separated by the size of
+    // 2* the size of the template to be counted as a new afterpulse
+    Int_t previous_apulse = sweep_start - (Int_t)temp.size();
+
+    // Create containers for the shape and amplitude convolutions for storing
+    std::vector<Double_t> shape_convolution;
+    std::vector<Double_t> amp_convolution;
+
+    // Begin the convolution or sweep
+    for ( Int_t i_sweep = sweep_start; i_sweep < (Int_t)vec.size() - (Int_t)temp.size(); i_sweep++ )
+    {
+        // At each point we will define a test/sample, in which we will look for a pulse via a convolution
+        std::vector<Double_t> test;
+        for ( Int_t i_vec = 0; i_vec < (Int_t)temp.size(); i_vec++ )
+        {
+            test.push_back( vec[i_vec + i_sweep] - baseline );
+        }
+
+        // Perform the convolution
+        Double_t test_norm = sqrt(get_inner_product( test, test ));
+        // Double_t temp_norm = get_inner_product( temp, temp );
+        Double_t amplitude_index = get_inner_product( test, temp );
+        Double_t shape_index = amplitude_index/test_norm;
+
+        if (shape_index > 1.0)
+        {
+            std::cout << "Error: shape_index: "<< shape_index << " > 1" << std::endl;
+            exit(1);
+        }
+
+        // Store the convolution
+        shape_convolution.push_back(shape_index);
+        amp_convolution.push_back(amplitude_index);
+
+        // The main cut is on time as we don't care about the main pulse
+        if ( i_sweep > time_cut )
+        {
+            if ( shape_index > shape_cut && amplitude_index > amp_cut) // We have an afterpulse
+            {
+                Int_t distance_to_nearest_afterpulse = i_sweep - previous_apulse;
+
+                // Check whether still on same afterpulse using the afterpulse time cut
+                if (distance_to_nearest_afterpulse > apulse_time_cut)
+                {
+                    // This is a new afterpulse:
+                    apulse_amp_vec.push_back( amplitude_index );
+                    apulse_shape_vec.push_back( shape_index );
+                    apulse_time_vec.push_back( i_sweep );
+                    previous_apulse = i_sweep;
+                    current_apulse = apulse_amp_vec.size()-1;
+                } else{
+                    // We are still analysing the same afterpulse
+                    if (amplitude_index > apulse_amp_vec[current_apulse])
+                    {
+                        apulse_amp_vec[current_apulse] = amplitude_index;
+                        apulse_shape_vec[current_apulse] = shape_index;
+                        apulse_time_vec[current_apulse] = i_sweep;
+                    }
+                }
+            }
+        }
+    }
+
+    temp_mf.apulse_amplitudes = apulse_amp_vec;
+    temp_mf.apulse_shapes = apulse_shape_vec;
+    temp_mf.apulse_times = apulse_time_vec;
+    temp_mf.mf_amps = amp_convolution;
+    temp_mf.mf_shapes = shape_convolution;
+    temp_mf.apulse_num = (Int_t)apulse_time_vec.size();
+    return temp_mf;
+}
+CONF read_config( std::string filename )
+{
+    CONF config;
+
+    std::ifstream file(filename);
+    std::string line;
+
+    if (!file.good())
+    {
+        std::cout << "matched_filter.cpp : ERROR opening configuration file : " << filename << std::endl;
+        std::cout << "EXIT" << std::endl;
+        exit(1);
+    }
+
+    while ( std::getline( file, line ) && !file.eof() )
+    {
+        if ( line.find ( "#" ) != std::string::npos )
+        {
+            // A comment so ignore
+            continue;
+
+        }
+        else if  (line.empty())
+        {
+            // Empty line so ignore
+            continue;
+        }else{
+            std::vector<std::string> settings = split( line, ':' );
+            if ( settings[0] == "integration" ) { config.integration.push_back(std::stod(settings[1])); config.integration.push_back(std::stod(settings[2])); }
+            else if ( settings[0] == "sweep_start" ) { config.sweep_start = std::stoi(settings[1]); }
+            else if ( settings[0] == "pre_trigger" ) { config.pre_trigger = std::stoi(settings[1]); }
+            else if ( settings[0] == "shape_cut" ) { config.shape_cut = std::stod(settings[1]); }
+            else if ( settings[0] == "amp_cut" ) { config.amp_cut = std::stod(settings[1]); }
+            else if ( settings[0] == "charge_cut" ) { config.charge_cut = std::stod(settings[1]); }
+            else if ( settings[0] == "trigger" ) { config.trigger = std::stod(settings[1]); }
+            else if ( settings[0] == "trig_tolerance" ) { config.trig_tolerance = std::stod(settings[1]); }
+            else if ( settings[0] == "resistance" ) { config.resistance = std::stod(settings[1]); }
+            else if ( settings[0] == "apulse_time_cut" ) { config.apulse_time_cut = std::stod(settings[1]); }
+            else if ( settings[0] == "temp_file" ) { config.template_file = settings[1]; }
+            else { continue; }
+        }
+    }
+
+    return config;
 }
 
