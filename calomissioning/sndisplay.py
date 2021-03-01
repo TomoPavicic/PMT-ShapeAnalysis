@@ -417,9 +417,9 @@ class calorimeter:
 
         ROOT.gSystem.ProcessEvents()
 
-    def save(self):
-        self.canvas_it.SaveAs(self.name + '_it.png')
-        self.canvas_fr.SaveAs(self.name + '_fr.png')
+    def save(self, location: str):
+        self.canvas_it.SaveAs(location + "/" + self.name + '_it.png')
+        self.canvas_fr.SaveAs(location + "/" + self.name + '_fr.png')
 
 
 def sndisplay_test():
@@ -435,7 +435,7 @@ def sndisplay_test():
         sncalo.setcontent(omnum, gauss(50.0, 10.0))'''
 
     sncalo.draw()
-    sncalo.save()
+    sncalo.save(".")
 
 
 if __name__ == '__main__':

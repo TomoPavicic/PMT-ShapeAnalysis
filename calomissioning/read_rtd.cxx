@@ -35,7 +35,9 @@
 #include <sncabling/calo_signal_cabling.h>
 
 typedef struct {
-    Int_t OM_ID, row, col, wall, ID;
+    Int_t OM_ID;
+    Double_t charge, baseline, amplitude;
+    bool is_main, is_xwall, is_gveto, is_fr, is_it;
 } EVENTN;
 
 typedef struct {
@@ -144,19 +146,6 @@ int main(int argc, char **argv)
                         do_template = false;
                     }
                 }
-                /*else if ( s == "-OM" )
-                {
-                    chosen_OM = std::stoi(argv[i+1]);
-                }
-                else if ( s == "-W" )
-                {
-                    if ( std::string(argv[i+1]) == "true" )
-                    {
-                        do_waveforms = true;
-                    }else{
-                        do_waveforms = false;
-                    }
-                }*/
 	        }
         }
     
@@ -170,15 +159,29 @@ int main(int argc, char **argv)
 
         // std::vector<Double_t> energy_coefs = read_energy_coef("/sps/nemo/scratch/wquinn/PMT-ShapeAnalysis/calomissioning/energy_coefs.csv");
 
+        // The templates will have some specific construction. Store in a STRUCT
         TEMP_INFO template_info;
+
+        // Define some counters
         std::vector<int> average_counter(template_info.n_templates,0);
         std::vector<std::vector<int>> om_counter;
         for (int l = 0; l < 3; ++l) {
             std::vector<int> om_vector(2,0);
             om_counter.push_back(om_vector);
-        }
+        } // I don't know of  a better way to initialise
+
+        // Define how many events per category (my_class) you wish,
+        // Categories: MWALL = 0, XWALL = 1, GVETO = 2
         int n_stop = 1000000;
+        int my_class;
+
+        // Defien how many waveforms you want to use in the template averaging
+        // The more you use the more the noise is smeared out
         int n_average = 1000;
+
+        // Initialise template vectors container
+        // If you are creating them, set the vectors to be of the size in TEMP_INFO of ZEROS
+        // Else read them from the file in the same directory called "templates.root"
         std::vector<std::vector<Double_t>> template_vectors;
         if ( do_template )
         {
@@ -205,51 +208,45 @@ int main(int argc, char **argv)
 
         sncabling::service snCabling;
         snCabling.initialize_simple();
+
         // Access to the calorimeter signal readout cabling map:
         const sncabling::calo_signal_cabling & caloSignalCabling = snCabling.get_calo_signal_cabling();
 
+        // Read the config file and store the variables in the CONF object
+        CONF config_object = read_config( "/sps/nemo/scratch/wquinn/PMT-ShapeAnalysis/config_files/snemo_calo.conf" );
+
+        // Output ntuple creation and setup
         TFile* output_file = new TFile(output_file_name.c_str(), "RECREATE");
+
+        // Contains event info
+        EVENTN eventn;
     
         Int_t event_num;
-        Int_t row;
-        Int_t column;
-        Int_t OM_ID;
-        Int_t charge;
-        Int_t amplitude;
-        Int_t baseline;
-        Int_t wall;
-        Int_t side;
-        bool is_gveto;
-        bool is_xwall;
-        bool is_main;
         std::vector<Double_t> waveform;
 
-        CONF config_object = read_config( "/sps/nemo/scratch/wquinn/PMT-ShapeAnalysis/config_files/snemo_calo.conf" );
         MATCHFILTER matchfilter;
 
-        // Create a ROOT Tree
         TTree tree("T","Tree containing simulated vertex data");
         tree.Branch("event_num",&event_num);
-        tree.Branch("row",&row);
-        tree.Branch("column",&column);
         tree.Branch("OM_ID",&OM_ID);
-        tree.Branch("charge",&charge);
-        tree.Branch("baseline",&baseline);
-        tree.Branch("amplitude",&amplitude);
-        tree.Branch("wall",&wall);
-        tree.Branch("wall",&side);
-        tree.Branch("is_gveto",&is_gveto);
-        tree.Branch("is_main",&is_main);
-        tree.Branch("is_xwall",&is_xwall);
+        tree.Branch("charge",&event_n.charge);
+        tree.Branch("baseline",&eventn.baseline);
+        tree.Branch("amplitude",&eventn.amplitude);
+        tree.Branch("is_gveto",&eventn.is_gveto);
+        tree.Branch("is_main",&eventn.is_main);
+        tree.Branch("is_xwall",&eventn.is_xwall);
+        tree.Branch("is_fr",&eventn.is_fr);
+        tree.Branch("is_it",&eventn.is_it);
         tree.Branch("apulse_num",&matchfilter.apulse_num);
         tree.Branch("apulse_times",&matchfilter.apulse_times);
         tree.Branch("apulse_amplitudes",&matchfilter.apulse_amplitudes);
         tree.Branch("apulse_shapes",&matchfilter.apulse_shapes);
+
+        // These next three branches should be uncommented if you wish to store the waveform and
+        // MF outputs - WARNING takes up a lot of storage space. I recommend only for testing and plots
         //tree.Branch("mf_amplitudes",&matchfilter.mf_amps);
         //tree.Branch("mf_shapes",&matchfilter.mf_shapes);
         //tree.Branch("waveform",&waveform);
-
-        bool cont = true;
 
         // Configuration for raw data reader
         snfee::io::multifile_data_reader::config_type reader_cfg;
@@ -263,10 +260,6 @@ int main(int argc, char **argv)
         snfee::data::raw_trigger_data rtd;
 
         event_num = 0;
-
-        int my_class;
-
-        EVENTN eventn;
 
         std::size_t rtd_counter = 0;
         while ( rtd_source.has_record_tag() )
@@ -291,16 +284,9 @@ int main(int argc, char **argv)
 	            uint64_t tdc             = calo_hit.get_tdc();        // TDC timestamp (48 bits)
 	            int32_t  crate_num       = calo_hit.get_crate_num();  // Crate number (0,1,2)
 	            int32_t  board_num       = calo_hit.get_board_num();  // Board number (0-19)
-	            //if (board_num >= 10){ board_num++; };                 // convert board_num  from [10-19] to [11-20]
+	            //if (board_num >= 10){ board_num++; };                 // OLD convert board_num  from [10-19] to [11-20]
 	            int32_t  chip_num        = calo_hit.get_chip_num();   // Chip number (0-7)
 	            auto     hit_num         = calo_hit.get_hit_num();
-
-                /*
-                if(rtd_counter < 100 ){
-                  std::clog<<"   |-> tdc      : "<< tdc <<std::endl;
-                  std::clog<<"   |-> calo data from CaloFEB : "<<crate_num<<"."<<board_num<<"."<<chip_num<<std::endl;
-                }
-                */
 
 	            // Extract SAMLONG channels' data:
 	            // 2 channels per SAMLONG
@@ -317,6 +303,8 @@ int main(int argc, char **argv)
 	                int32_t ch_rising_cell  {ch_data.get_rising_cell()};  // Computed rising cell
 	                int32_t ch_falling_cell {ch_data.get_falling_cell()}; // Computed falling cell
 
+	                // The following is commented out but kept here for
+	                // how to calculate true variables from the ones stored in data
 	                /*Double_t ch_rising_cell_  = Double_t(ch_rising_cell);
 	                Double_t ch_falling_cell_ = Double_t(ch_falling_cell);
 	                Double_t ch_peak_cell_    = Double_t(ch_peak_cell);
@@ -324,29 +312,29 @@ int main(int argc, char **argv)
 	                Double_t rising_actual    = (ch_rising_cell_*6.25)/256.0;
 	                Double_t falling_actual   = (ch_falling_cell_*6.25)/256.0;
 	                Double_t peak_actual      = ch_peak_cell_*6.25/8.0;*/
+	                //
 
 	                sncabling::calo_signal_id readout_id(sncabling::CALOSIGNAL_CHANNEL,
 	                        crate_num, board_num,
 	                        snfee::model::feb_constants::SAMLONG_NUMBER_OF_CHANNELS * chip_num + ichannel);
-
-                    //std::cout << "charge: " << ch_charge << std::endl;
 	  
 	                if (caloSignalCabling.has_channel(readout_id))
 	                {
 	                    const sncabling::om_id & calo_id = caloSignalCabling.get_om(readout_id);
 
-	                    is_main = false;
-	                    is_gveto = false;
-	                    is_xwall = false;
+	                    eventn.is_main = false;
+	                    eventn.is_gveto = false;
+	                    eventn.is_xwall = false;
+	                    eventn.is_fr = false;
+	                    eventn.is_it = false;
 
                         if (calo_id.is_main()) {
                             side = calo_id.get_side();
-                            column = calo_id.get_column();
-                            row = calo_id.get_row();
-                            OM_ID = row + column*13 + side*260;
+                            eventn.col = calo_id.get_column();
+                            eventn.row = calo_id.get_row();
+                            eventn.OM_ID = row + column*13 + side*260;
                             is_main = true;
                             my_class = 0;
-
                         }
                         else if (calo_id.is_xwall()) {
                             side = calo_id.get_side();
@@ -367,6 +355,9 @@ int main(int argc, char **argv)
                         }
                         if (om_counter[my_class][side] >= n_stop){ continue; }
 
+                        if ( side == 1 ){ eventn.is_fr = true; }
+                        else{ eventn.is_it = true; }
+
 	                    uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
 	                    // std::vector<Double_t> waveform_adc;
 	                    for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
@@ -377,15 +368,10 @@ int main(int argc, char **argv)
 	                    Double_t my_baseline    = get_baseline( waveform , config_object);
 	                    Double_t my_amplitude   = get_amplitude( waveform ) - my_baseline;
 
-	                    amplitude       = my_amplitude;
-	                    baseline        = my_baseline;
-	                    charge          = ch_charge;
-	                    wall            = crate_num;
-	                    eventn.OM_ID    = OM_ID;
-	                    eventn.col      = column;
-	                    eventn.row      = row;
-	                    eventn.wall     = crate_num;
-	                    eventn.ID       = event_num;
+	                    eventn.amplitude       = my_amplitude;
+	                    eventn.baseline        = my_baseline;
+	                    eventn.charge          = ch_charge;
+	                    eventn.OM_ID           = OM_ID;
 
 	                    if ( do_template )
 	                    {
@@ -405,13 +391,11 @@ int main(int argc, char **argv)
                             matchfilter = sweep(waveform, config_object, my_baseline, template_vectors[OM_ID]);
 	                        tree.Fill();
 	                    }
-	                    //std::cout<< "Tree fill" << std::endl;
 
 	                }
 	            } //end of channels
             }//end of calohit
             event_num ++;
-            //if (event_num == 100000 && !do_template){ break; }
             if ( om_counter[0][0] >= n_stop && om_counter[0][1] >= n_stop && om_counter[1][0] >= n_stop &&
                 om_counter[1][1] >= n_stop && om_counter[2][0] >= n_stop && om_counter[2][1] >= n_stop){ break; }
         }   //end of file
