@@ -933,7 +933,7 @@ Int_t get_main_pulse( CONF &config, std::vector<Double_t> &vec )
         if ( vec[i] > vec[pulse_start] ){
             pulse_start = i;
         }
-    return i;
+    return pulse_start;
 }
 Double_t get_charge( CONF &config, std::vector<Double_t> &vec, Double_t baseline )
 {
