@@ -336,7 +336,7 @@ int main(int argc, char **argv)
                             eventn.side = calo_id.get_side();
                             eventn.col = calo_id.get_column();
                             eventn.row = calo_id.get_row();
-                            eventn.OM_ID = row + column*13 + side*260;
+                            eventn.OM_ID = eventn.row + eventn.col*13 + eventn.side*260;
                             eventn.is_main = true;
                             my_class = 0;
                         }
@@ -345,7 +345,7 @@ int main(int argc, char **argv)
                             eventn.wall = calo_id.get_wall();
                             eventn.col = calo_id.get_column();
                             eventn.row = calo_id.get_row();
-                            eventn.OM_ID = 520 + side*64 + wall*32  + column*16 + row;
+                            eventn.OM_ID = 520 + eventn.side*64 + eventn.wall*32  + eventn.col*16 + eventn.row;
                             eventn.is_xwall = true;
                             my_class = 1;
                         }
@@ -353,11 +353,11 @@ int main(int argc, char **argv)
                             eventn.side = calo_id.get_side();
                             eventn.wall = calo_id.get_wall();
                             eventn.col = calo_id.get_column();
-                            eventn.OM_ID = 520 + 128 + side*32 + wall*16 + column;
+                            eventn.OM_ID = 520 + 128 + eventn.side*32 + eventn.wall*16 + eventn.col;
                             eventn.is_gveto = true;
                             my_class = 2;
                         }
-                        if (om_counter[my_class][side] >= n_stop){ continue; }
+                        if (om_counter[my_class][eventn.side] >= n_stop){ continue; }
 
                         if ( eventn.side == 1 ){ eventn.is_fr = true; }
                         else{ eventn.is_it = true; }
@@ -375,18 +375,17 @@ int main(int argc, char **argv)
 	                    eventn.amplitude       = my_amplitude;
 	                    eventn.baseline        = my_baseline;
 	                    eventn.charge          = get_charge( config_object, waveform, my_baseline );
-	                    eventn.OM_ID           = OM_ID;
 
 	                    if ( do_template )
 	                    {
-	                        if ( amplitude > -100 ){ continue; }
-	                        if ( average_counter[OM_ID] > n_average ){ continue; }
+	                        if ( my_amplitude > -100 ){ continue; }
+	                        if ( average_counter[eventn.OM_ID] > n_average ){ continue; }
 	                        std::vector<Double_t> temp_vector;
 	                        for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
 	                        {
 	                            temp_vector.push_back( waveform[isample] - baseline );
 	                        }
-	                        update_temp_vector( template_vectors, temp_vector, template_info, OM_ID,
+	                        update_temp_vector( template_vectors, temp_vector, template_info, eventn.OM_ID,
 	                                config_object );
 	                        average_counter[OM_ID]++;
 	                    }else{
@@ -614,7 +613,7 @@ void draw_waveform( std::vector<Double_t> &vec, Int_t n_samples,
     std::string w_title = std::to_string(eventn.wall) + ":" + std::to_string(eventn.col) +
                           ":" + std::to_string(eventn.row) + " Waveform";
     waveform_hist->SetTitle(w_title.c_str());
-    std::string can_name = output_directory + "_" + std::to_string(eventn.ID) + "_" +
+    std::string can_name = output_directory + "_" + std::to_string(eventn.OM_ID) + "_" +
                            std::to_string(eventn.wall) + "_" + std::to_string(eventn.col) +
                            "_" + std::to_string(eventn.row) + "_waveform.png";
 
