@@ -42,9 +42,9 @@ typedef struct {
 
 typedef struct {
     Int_t low_edge = 10;
-    Int_t high_edge = 40;
-    Int_t temp_length = 50;
-    Int_t n_templates = 728;
+    Int_t high_edge = 30;
+    Int_t temp_length = 40;
+    Int_t n_templates = 712;
 } TEMP_INFO;
 
 typedef struct {
