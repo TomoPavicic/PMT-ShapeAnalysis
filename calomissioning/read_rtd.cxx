@@ -35,7 +35,7 @@
 #include <sncabling/calo_signal_cabling.h>
 
 typedef struct {
-    Int_t OM_ID;
+    Int_t OM_ID, side, wall, col, row;
     Double_t charge, baseline, amplitude;
     bool is_main, is_xwall, is_gveto, is_fr, is_it;
 } EVENTN;
@@ -231,8 +231,8 @@ int main(int argc, char **argv)
 
         TTree tree("T","Tree containing simulated vertex data");
         tree.Branch("event_num",&event_num);
-        tree.Branch("OM_ID",&OM_ID);
-        tree.Branch("charge",&event_n.charge);
+        tree.Branch("OM_ID",&eventn.OM_ID);
+        tree.Branch("charge",&eventn.charge);
         tree.Branch("baseline",&eventn.baseline);
         tree.Branch("amplitude",&eventn.amplitude);
         tree.Branch("is_gveto",&eventn.is_gveto);
@@ -333,33 +333,33 @@ int main(int argc, char **argv)
 	                    eventn.is_it = false;
 
                         if (calo_id.is_main()) {
-                            side = calo_id.get_side();
+                            eventn.side = calo_id.get_side();
                             eventn.col = calo_id.get_column();
                             eventn.row = calo_id.get_row();
                             eventn.OM_ID = row + column*13 + side*260;
-                            is_main = true;
+                            eventn.is_main = true;
                             my_class = 0;
                         }
                         else if (calo_id.is_xwall()) {
-                            side = calo_id.get_side();
-                            wall = calo_id.get_wall();
-                            column = calo_id.get_column();
-                            row = calo_id.get_row();
-                            OM_ID = 520 + side*64 + wall*32  + column*16 + row;
-                            is_xwall = true;
+                            eventn.side = calo_id.get_side();
+                            eventn.wall = calo_id.get_wall();
+                            eventn.col = calo_id.get_column();
+                            eventn.row = calo_id.get_row();
+                            eventn.OM_ID = 520 + side*64 + wall*32  + column*16 + row;
+                            eventn.is_xwall = true;
                             my_class = 1;
                         }
                         else if (calo_id.is_gveto()) {
-                            side = calo_id.get_side();
-                            wall = calo_id.get_wall();
-                            column = calo_id.get_column();
-                            OM_ID = 520 + 128 + side*32 + wall*16 + column;
-                            is_gveto = true;
+                            eventn.side = calo_id.get_side();
+                            eventn.wall = calo_id.get_wall();
+                            eventn.col = calo_id.get_column();
+                            eventn.OM_ID = 520 + 128 + side*32 + wall*16 + column;
+                            eventn.is_gveto = true;
                             my_class = 2;
                         }
                         if (om_counter[my_class][side] >= n_stop){ continue; }
 
-                        if ( side == 1 ){ eventn.is_fr = true; }
+                        if ( eventn.side == 1 ){ eventn.is_fr = true; }
                         else{ eventn.is_it = true; }
 
 	                    uint16_t waveform_number_of_samples = calo_hit.get_waveform_number_of_samples();
