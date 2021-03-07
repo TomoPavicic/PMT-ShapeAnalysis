@@ -49,6 +49,7 @@ typedef struct {
 
 typedef struct {
     Int_t apulse_num;
+    Int_t main_pulse_time;
     std::vector<Int_t> apulse_times;
     std::vector<Double_t> apulse_amplitudes;
     std::vector<Double_t> apulse_shapes;
@@ -83,6 +84,8 @@ std::vector<Double_t> read_energy_coef( std::string filename );
 std::vector<std::string> split( const std::string& s, char delimiter );
 CONF read_config( std::string filename );
 MATCHFILTER sweep( std::vector<Double_t> &vec, CONF &config, Double_t baseline, std::vector<Double_t>& temp );
+Int_t get_main_pulse( CONF &config, std::vector<Double_t> &vec );
+Double_t get_charge( CONF &config, std::vector<Double_t> &vec, Double_t baseline );
 
 bool debug = true;
 
@@ -241,6 +244,7 @@ int main(int argc, char **argv)
         tree.Branch("apulse_times",&matchfilter.apulse_times);
         tree.Branch("apulse_amplitudes",&matchfilter.apulse_amplitudes);
         tree.Branch("apulse_shapes",&matchfilter.apulse_shapes);
+        tree.Branch("main_pulse_time",&matchfilter.main_pulse_time);
 
         // These next three branches should be uncommented if you wish to store the waveform and
         // MF outputs - WARNING takes up a lot of storage space. I recommend only for testing and plots
@@ -370,7 +374,7 @@ int main(int argc, char **argv)
 
 	                    eventn.amplitude       = my_amplitude;
 	                    eventn.baseline        = my_baseline;
-	                    eventn.charge          = ch_charge;
+	                    eventn.charge          = get_charge( config_object, waveform, my_baseline );
 	                    eventn.OM_ID           = OM_ID;
 
 	                    if ( do_template )
@@ -873,6 +877,7 @@ MATCHFILTER sweep( std::vector<Double_t> &vec, CONF &config, Double_t baseline, 
     temp_mf.apulse_times = apulse_time_vec;
     temp_mf.mf_amps = amp_convolution;
     temp_mf.mf_shapes = shape_convolution;
+    temp_mf.main_pulse_time = get_main_pulse(config, shape_convolution);
     temp_mf.apulse_num = (Int_t)apulse_time_vec.size();
     return temp_mf;
 }
@@ -920,5 +925,23 @@ CONF read_config( std::string filename )
     }
 
     return config;
+}
+Int_t get_main_pulse( CONF &config, std::vector<Double_t> &vec )
+{
+    int pulse_start = 0;
+    for ( int i = 0; i < config.sweep_start; i++ )
+        if ( vec[i] > vec[pulse_start] ){
+            pulse_start = i;
+        }
+    return i;
+}
+Double_t get_charge( CONF &config, std::vector<Double_t> &vec, Double_t baseline )
+{
+    Double_t charge = 0.0;
+    for (int i = config.pre_trigger; i < config.sweep_start; ++i)
+    {
+        charge += charge - baseline;
+    }
+    return charge*config.resistance;
 }
 
