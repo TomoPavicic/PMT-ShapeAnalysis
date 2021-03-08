@@ -383,7 +383,7 @@ int main(int argc, char **argv)
 	                        std::vector<Double_t> temp_vector;
 	                        for (uint16_t isample = 0; isample < waveform_number_of_samples; isample++)
 	                        {
-	                            temp_vector.push_back( waveform[isample] - baseline );
+	                            temp_vector.push_back( waveform[isample] - my_baseline );
 	                        }
 	                        update_temp_vector( template_vectors, temp_vector, template_info, eventn.OM_ID,
 	                                config_object );
