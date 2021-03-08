@@ -175,7 +175,7 @@ int main(int argc, char **argv)
 
         // Define how many events per category (my_class) you wish,
         // Categories: MWALL = 0, XWALL = 1, GVETO = 2
-        int n_stop = 1000000;
+        int n_stop = 100;
         int my_class;
 
         // Defien how many waveforms you want to use in the template averaging
@@ -248,9 +248,9 @@ int main(int argc, char **argv)
 
         // These next three branches should be uncommented if you wish to store the waveform and
         // MF outputs - WARNING takes up a lot of storage space. I recommend only for testing and plots
-        //tree.Branch("mf_amplitudes",&matchfilter.mf_amps);
-        //tree.Branch("mf_shapes",&matchfilter.mf_shapes);
-        //tree.Branch("waveform",&waveform);
+        tree.Branch("mf_amplitudes",&matchfilter.mf_amps);
+        tree.Branch("mf_shapes",&matchfilter.mf_shapes);
+        tree.Branch("waveform",&waveform);
 
         // Configuration for raw data reader
         snfee::io::multifile_data_reader::config_type reader_cfg;

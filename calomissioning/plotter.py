@@ -136,6 +136,7 @@ def draw_template_quality(comparison: np.array, templates: list):
     sncalo.draw_content_label('{:.3f}')
 
     for i_temp in range(len(templates)):
+        # draw_template(i_temp, om_id_string(i_temp), templates[i_temp])
         shape = float(np.dot(comparison, templates[i_temp]))
         if shape != 0:
             sncalo.setcontent(i_temp, shape)
@@ -400,8 +401,9 @@ def main():
     if template_file is None:
         template_file = "/Users/willquinn/Desktop/templates.root"
 
-    # templates, comparison_template = get_templates(template_file, comparison=1)
-    # draw_template_quality(comparison_template, templates)
+    templates, comparison_template = get_templates(template_file, comparison=1)
+    draw_template_quality(comparison_template, templates)
+    return
 
     om_hvs = load_HV("/Users/willquinn/Desktop/calorimeter_equalized_04Mar2020.txt")
 
@@ -422,8 +424,8 @@ def main():
 
         n_events[OM_ID] += 1
 
-        print(event.charge)
-        charges[OM_ID].append(event.charge)
+        # print(event.charge)
+        # charges[OM_ID].append(event.charge)
 
         main_pulse_time = event.main_pulse_time
         for i_pulse in list(event.apulse_times):
@@ -449,7 +451,7 @@ def main():
     # draw_AAD(apulse_amplitudes)
     # draw_event_map(n_events)
     # draw_HV_ATD(om_hvs, apulse_times)
-    draw_charges(charges)
+    # draw_charges(charges)
 
     root_file.Close()
 
