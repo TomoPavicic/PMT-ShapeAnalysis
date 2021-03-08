@@ -85,7 +85,7 @@ std::vector<std::string> split( const std::string& s, char delimiter );
 CONF read_config( std::string filename );
 MATCHFILTER sweep( std::vector<Double_t> &vec, CONF &config, Double_t baseline, std::vector<Double_t>& temp );
 Int_t get_main_pulse( CONF &config, std::vector<Double_t> &vec );
-Double_t get_charge( CONF &config, std::vector<Double_t> &vec, Double_t baseline );
+Double_t get_my_charge( CONF &config, std::vector<Double_t> &vec, Double_t baseline );
 
 bool debug = true;
 
@@ -374,7 +374,7 @@ int main(int argc, char **argv)
 
 	                    eventn.amplitude       = my_amplitude;
 	                    eventn.baseline        = my_baseline;
-	                    eventn.charge          = get_charge( config_object, waveform, my_baseline );
+	                    eventn.charge          = get_my_charge( config_object, waveform, my_baseline );
 
 	                    if ( do_template )
 	                    {
@@ -934,13 +934,13 @@ Int_t get_main_pulse( CONF &config, std::vector<Double_t> &vec )
         }
     return pulse_start;
 }
-Double_t get_charge( CONF &config, std::vector<Double_t> &vec, Double_t baseline )
+Double_t get_my_charge( CONF &config, std::vector<Double_t> &vec, Double_t baseline )
 {
     Double_t charge = 0.0;
     for (int i = config.pre_trigger; i < config.sweep_start; ++i)
     {
         charge += charge - baseline;
     }
-    return charge*config.resistance;
+    return charge/config.resistance;
 }
 

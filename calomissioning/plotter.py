@@ -164,7 +164,7 @@ def get_templates(root_file: str, comparison: int):
             continue
 
         for i_bin in range(h_template.GetNbinsX()):
-            if i == 1:
+            if i == comparison:
                 comparison_template.append(h_template.GetBinContent(i_bin))
             template.append(h_template.GetBinContent(i_bin))
         templates.append(np.array(template))
@@ -215,14 +215,14 @@ def draw_ATD(apulse_times: list):
         if np.sum(np.array(apulse_times[i])) == 0:
             continue
         for j in range(len(apulse_times[i])):
-            for k in range(apulse_times[i][j]):
-                hist.Fill(j/0.64)
+            hist.Fill(apulse_times[i][j]/0.64)
         hist.Scale(1.0/hist.GetEntries())
         hist.SetFillColor(2)
         hist.Sumw2()
         hist.SetXTitle("timestamp /ns")
-        hist.Draw()
-        canvas.SetGrid("HIST")
+        hist.SetYTitle("Normalised Counts")
+        hist.Draw("HIST")
+        canvas.SetGrid()
         canvas.SaveAs(f"plots/h_atd_{i}.png")
         del hist
         del canvas
@@ -231,7 +231,7 @@ def draw_ATD(apulse_times: list):
 def draw_AAD(apulse_amplitudes: list):
     for i in range(len(apulse_amplitudes)):
         canvas = ROOT.TCanvas()
-        hist = ROOT.TH1D(f"om_id_string(i)", f"{om_id_string(i)}", 40, 0, 400)
+        hist = ROOT.TH1D(f"{om_id_string(i)}", f"{om_id_string(i)}", 40, 0, 400)
         for j in range(len(apulse_amplitudes[i])):
             hist.Fill(apulse_amplitudes[i][j])
         hist.SetXTitle("mf amplitude")
@@ -255,6 +255,141 @@ def draw_event_map(n_events: list):
     sncalo.save("plots")
 
 
+def get_pmt_type(omnum: id):
+    pmt_type = 0
+    if 0 <= omnum < 260:
+        col = omnum // 13
+        row = omnum % 13
+        if row == 0 or row == 12:
+            pmt_type = 5
+        else:
+            pmt_type = 8
+    elif omnum < 520:
+        omnum = omnum - 260
+        col = omnum // 13
+        row = omnum % 13
+        if row == 0 or row == 12:
+            pmt_type = 5
+        else:
+            pmt_type = 8
+    else:
+        pmt_type = 5
+
+    return pmt_type
+
+
+def id_om_string(id_: str):
+    om = 0
+    strip = id_.split(":")
+    strip_0 = strip[1].split(".")
+    om_class = strip[0]
+
+    if om_class == 'M':
+        om = 260 * int(strip_0[0]) + int(strip_0[1]) * 13 + int(strip_0[2])
+
+    elif om_class == 'X':
+        om = 520 + int(strip_0[0]) * 64 + int(strip_0[1]) * 32 + int(strip_0[2]) * 16 + int(strip_0[3])
+
+    elif om_class == 'G':
+        om = 520 + 128 + int(strip_0[0]) * 32 + int(strip_0[1]) * 16 + int(strip_0[2])
+
+    return om
+
+
+def load_HV(input_file: str):
+    f = open(input_file, "r")
+    fl = f.readlines()
+    hvs = [0 for i in range(712)]
+    for line in fl:
+        if line.find("#") == 0:
+            continue
+
+        if line.find("M:") == 0 or line.find("X:") == 0 or line.find("G:") == 0:
+            line_list = line.split(" ")
+            om = id_om_string(line_list[0])
+            hv = int(line_list[-1].strip())
+            hvs[om] = hv
+        else:
+            continue
+    return hvs
+
+
+def draw_charges(charges: list):
+    for i in range(len(charges)):
+        canvas = ROOT.TCanvas()
+        hist = ROOT.TH1D(f"{om_id_string(i)}", f"{om_id_string(i)}", 40, 0, 400)
+        for j in range(len(charges[i])):
+            hist.Fill(-charges[i][j])
+        hist.SetXTitle("charge /pC")
+        hist.SetFillColor(2)
+        hist.Draw("HIST")
+        canvas.SetGrid()
+        canvas.SaveAs(f"plots/charge_{i}.png")
+        del hist
+        del canvas
+
+
+def draw_HV_ATD(hvs: list, apulse_times: list):
+    tot_5_canvas = ROOT.TCanvas()
+    tot_8_canvas = ROOT.TCanvas()
+    tot_5_hist = ROOT.TH1D("5inch_PMTs", "5inch_PMTs",
+                           int((1024 / 0.64) / 10), 0, (1024 / 0.64) * np.sqrt(np.max(hvs)/1000))
+    tot_8_hist = ROOT.TH1D("8inch_PMTs", "8inch_PMTs",
+                           int((1024 / 0.64) / 10), 0, (1024 / 0.64) * np.sqrt(np.max(hvs)/1000))
+    for i in range(len(apulse_times)):
+        '''max_val = 1024 / 0.64 * np.sqrt(hvs[i]/1000)
+        canvas = ROOT.TCanvas()
+        canvas.cd()
+        hist = ROOT.TH1D(f"{om_id_string(i)}", f"{om_id_string(i)}", int((1024 / 0.64) / 20), 0, max_val)
+        if np.sum(np.array(apulse_times[i])) == 0:
+            continue
+        for j in range(len(apulse_times[i])):
+            hist.Fill(apulse_times[i][j]/0.64 * np.sqrt(hvs[i]/1000))
+        hist.Scale(1.0/hist.GetEntries())
+        hist.SetFillColor(2)
+        hist.Sumw2()
+        hist.SetXTitle("timestamp for 1kV /ns")
+        hist.SetYTitle("Normalised Counts")
+        hist.Draw("HIST")
+        canvas.SetGrid()
+        canvas.SaveAs(f"plots/h_hv_atd_{i}.png")
+        del hist
+        del canvas'''
+
+        pmt_type = get_pmt_type(i)
+
+        if pmt_type == 5:
+            for j in range(len(apulse_times[i])):
+                tot_5_hist.Fill(apulse_times[i][j] / 0.64 * np.sqrt(hvs[i] / 1000))
+        else:
+            for j in range(len(apulse_times[i])):
+                tot_8_hist.Fill(apulse_times[i][j] / 0.64 * np.sqrt(hvs[i] / 1000))
+
+    tot_5_canvas.cd()
+    tot_5_hist.Scale(1.0 / tot_5_hist.GetEntries())
+    tot_5_hist.SetFillColor(2)
+    tot_5_hist.Sumw2()
+    tot_5_hist.SetXTitle("timestamp for 1kV /ns")
+    tot_5_hist.SetYTitle("Normalised Counts")
+    tot_5_hist.Draw("HIST")
+    tot_5_canvas.SetGrid()
+    tot_5_canvas.SaveAs(f"plots/h_hv_atd_5tot.png")
+    del tot_5_hist
+    del tot_5_canvas
+
+    tot_8_canvas.cd()
+    tot_8_hist.Scale(1.0 / tot_8_hist.GetEntries())
+    tot_8_hist.SetFillColor(2)
+    tot_8_hist.Sumw2()
+    tot_8_hist.SetXTitle("timestamp for 1kV /ns")
+    tot_8_hist.SetYTitle("Normalised Counts")
+    tot_8_hist.Draw("HIST")
+    tot_8_canvas.SetGrid()
+    tot_8_canvas.SaveAs(f"plots/h_hv_atd_8tot.png")
+    del tot_8_hist
+    del tot_8_canvas
+
+
 def main():
     args = io_parse_arguments()
     input_file = args.i
@@ -268,29 +403,40 @@ def main():
     # templates, comparison_template = get_templates(template_file, comparison=1)
     # draw_template_quality(comparison_template, templates)
 
+    om_hvs = load_HV("/Users/willquinn/Desktop/calorimeter_equalized_04Mar2020.txt")
+
     root_file = ROOT.TFile(input_file, "READ")
     tree = root_file.T
 
-    # apulse_nums = [[] for i in range(712)]
-    apulse_times = [[0 for i in range(1024)] for j in range(712)]
-    # apulse_amplitudes = [[] for i in range(712)]
-    # n_events = [0 for i in range(712)]
+    charges = [[] for i in range(712)]
+    apulse_nums = [[] for i in range(712)]
+    apulse_times = [[] for i in range(712)]
+    apulse_amplitudes = [[] for i in range(712)]
+    n_events = [0 for i in range(712)]
 
     i_event = 0
     for event in tree:
         # baseline = event.baseline
         # waveform = np.array(event.waveform)
         OM_ID = event.OM_ID
-        # n_events[OM_ID] += 1
-        for i_pulse in list(event.apulse_times):
-            apulse_times[OM_ID][i_pulse] += 1
 
-        # for i_pulse in list(event.apulse_amplitudes):
-        #     apulse_amplitudes[OM_ID].append(i_pulse)
-        # apulse_nums[OM_ID].append(event.apulse_num)
-        # if event.apulse_num > 4:
-        #    sweep_example(om_id_string(OM_ID), templates[OM_ID], waveform-baseline)
-        #    break
+        n_events[OM_ID] += 1
+
+        print(event.charge)
+        charges[OM_ID].append(event.charge)
+
+        main_pulse_time = event.main_pulse_time
+        for i_pulse in list(event.apulse_times):
+            apulse_times[OM_ID].append(i_pulse - main_pulse_time)
+            #print((i_pulse - main_pulse_time)/0.64)
+
+        for i_pulse in list(event.apulse_amplitudes):
+            apulse_amplitudes[OM_ID].append(i_pulse)
+
+        apulse_nums[OM_ID].append(event.apulse_num)
+        '''if event.apulse_num > 4:
+            sweep_example(om_id_string(OM_ID), templates[OM_ID], waveform-baseline)
+            break'''
         # mf_example(waveform-baseline, [np.array(event.mf_shapes), np.array(event.mf_amplitudes)],
         #            list(event.apulse_times))
         i_event += 1
@@ -299,9 +445,11 @@ def main():
 
     # draw_AAN(apulse_nums)
     # draw_PAR(apulse_nums)
-    draw_ATD(apulse_times)
+    # draw_ATD(apulse_times)
     # draw_AAD(apulse_amplitudes)
     # draw_event_map(n_events)
+    # draw_HV_ATD(om_hvs, apulse_times)
+    draw_charges(charges)
 
     root_file.Close()
 
