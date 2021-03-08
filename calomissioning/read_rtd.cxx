@@ -387,11 +387,11 @@ int main(int argc, char **argv)
 	                        }
 	                        update_temp_vector( template_vectors, temp_vector, template_info, eventn.OM_ID,
 	                                config_object );
-	                        average_counter[OM_ID]++;
+	                        average_counter[eventn.OM_ID]++;
 	                    }else{
-                            if ( amplitude > -50 ){ continue; }
-                            om_counter[my_class][side] ++;
-                            matchfilter = sweep(waveform, config_object, my_baseline, template_vectors[OM_ID]);
+                            if ( my_amplitude > -50 ){ continue; }
+                            om_counter[my_class][eventn.side] ++;
+                            matchfilter = sweep(waveform, config_object, my_baseline, template_vectors[eventn.OM_ID]);
 	                        tree.Fill();
 	                    }
 
