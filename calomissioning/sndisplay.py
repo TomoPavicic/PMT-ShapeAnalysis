@@ -29,7 +29,7 @@ class calorimeter:
         self.has_french_data = False
 
         for omnum in range(self.nb_om):
-            self.content.append(0)
+            self.content.append(None)
 
         self.range_min = -1
         self.range_max = -1
@@ -232,8 +232,9 @@ class calorimeter:
 
         if self.draw_content:
             for omnum in range(self.nb_om):
-                ttext = self.content_text_v[omnum]
-                ttext.SetText(ttext.GetX(), ttext.GetY(), self.draw_content_format.format(self.content[omnum]))
+                if self.content[omnum] is not None:
+                    ttext = self.content_text_v[omnum]
+                    ttext.SetText(ttext.GetX(), ttext.GetY(), self.draw_content_format.format(self.content[omnum]))
 
         '''// // // // // // /
         // Draw IT //
@@ -251,7 +252,7 @@ class calorimeter:
                     self.omid_text_v[id].Draw()
                 if self.draw_omnum:
                     self.omnum_text_v[id].Draw()
-                if self.draw_content and self.content[id] != 0:
+                if self.draw_content and self.content[id] is not None:
                     self.content_text_v[id].Draw()
 
         xw_side = 0
@@ -264,7 +265,7 @@ class calorimeter:
                         self.omid_text_v[id].Draw()
                     if self.draw_omnum:
                         self.omnum_text_v[id].Draw()
-                    if self.draw_content and self.content[id] != 0:
+                    if self.draw_content and self.content[id] is not None:
                         self.content_text_v[id].Draw()
 
         gv_side = 0
@@ -276,7 +277,7 @@ class calorimeter:
                     self.omid_text_v[id].Draw()
                 if self.draw_omnum:
                     self.omnum_text_v[id].Draw()
-                if self.draw_content and self.content[id] != 0:
+                if self.draw_content and self.content[id] is not None:
                     self.content_text_v[id].Draw()
 
         self.it_label.Draw()
@@ -298,7 +299,7 @@ class calorimeter:
                     self.omid_text_v[id].Draw()
                 if self.draw_omnum:
                     self.omnum_text_v[id].Draw()
-                if self.draw_content and self.content[id] != 0:
+                if self.draw_content and self.content[id] is not None:
                     self.content_text_v[id].Draw()
 
         xw_side = 1
@@ -311,7 +312,7 @@ class calorimeter:
                         self.omid_text_v[id].Draw()
                     if self.draw_omnum:
                         self.omnum_text_v[id].Draw()
-                    if self.draw_content and self.content[id] != 0:
+                    if self.draw_content and self.content[id] is not None:
                         self.content_text_v[id].Draw()
 
         gv_side = 1
@@ -323,7 +324,7 @@ class calorimeter:
                     self.omid_text_v[id].Draw()
                 if self.draw_omnum:
                     self.omnum_text_v[id].Draw()
-                if self.draw_content and self.content[id] != 0:
+                if self.draw_content and self.content[id] is not None:
                     self.content_text_v[id].Draw()
 
         self.fr_label.Draw()
@@ -333,7 +334,7 @@ class calorimeter:
 
     def reset(self):
         for omnum in range(self.nb_om):
-            self.content[omnum] = 0
+            self.content[omnum] = None
 
         for omnum in range(self.nb_om):
             self.ombox[omnum].SetFillColor(0)
@@ -385,15 +386,24 @@ class calorimeter:
         self.content[omnum] = value
 
     def fill(self, omnum: int):
-        self.setcontent(omnum, self.content[omnum] + 1)
+        if self.content[omnum] is None:
+            val = 1
+        else:
+            val = self.content[omnum] + 1
+        self.setcontent(omnum, val)
 
     def update(self):
 
-        content_min = self.content[0]
-        content_max = self.content[0]
+        for i_om in range(self.nb_om):
+            if self.content[i_om] is not None:
+                content_min = self.content[i_om]
+                content_max = self.content[i_om]
+                break
 
         if self.range_min == -1:
             for omnum in range(1, self.nb_om):
+                if self.content[omnum] is None:
+                    continue
                 if self.content[omnum] < content_min:
                     content_min = self.content[omnum]
                 if self.content[omnum] > content_max:
@@ -403,11 +413,11 @@ class calorimeter:
             content_max = self.range_max
 
         for omnum in range(self.nb_om):
-            if self.content[omnum] != 0:
+            if self.content[omnum] is not None:
                 self.ombox[omnum].SetFillColor(
                     self.palette_index + int(99 * (self.content[omnum] - content_min) / (content_max - content_min)))
             else:
-                self.ombox[omnum].SetFillColor(0)
+                self.ombox[omnum].SetFillColor(14)
 
         self.canvas_it.Modified()
         self.canvas_it.Update()

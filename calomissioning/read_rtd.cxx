@@ -175,7 +175,7 @@ int main(int argc, char **argv)
 
         // Define how many events per category (my_class) you wish,
         // Categories: MWALL = 0, XWALL = 1, GVETO = 2
-        int n_stop = 100;
+        int n_stop = 1000000;
         int my_class;
 
         // Defien how many waveforms you want to use in the template averaging
@@ -939,7 +939,7 @@ Double_t get_my_charge( CONF &config, std::vector<Double_t> &vec, Double_t basel
     Double_t charge = 0.0;
     for (int i = config.pre_trigger; i < config.sweep_start; ++i)
     {
-        charge += charge - baseline;
+        charge += vec[i] - baseline;
     }
     return charge/config.resistance;
 }

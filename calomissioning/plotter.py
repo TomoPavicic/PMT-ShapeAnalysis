@@ -183,11 +183,26 @@ def draw_AAN(apulse_nums: list):
     sncalo.draw_content_label('{:.3f}')
 
     for i in range(len(apulse_nums)):
+        pmt_type = get_pmt_type(i)
+        # if pmt_type == 8:
         aan = float(np.average(apulse_nums[i]))
         if str(aan) == 'nan':
-            sncalo.setcontent(i, -1.0)
+            continue
         else:
             sncalo.setcontent(i, aan)
+
+    sncalo.draw()
+    sncalo.save("plots")
+
+
+def draw_HVs(hvs: list):
+    sncalo = calorimeter("hv")
+    sncalo.draw_omid_label()
+    sncalo.draw_content_label('{}')
+
+    for i in range(len(hvs)):
+        if hvs[i] != 0:
+            sncalo.setcontent(i, hvs[i])
 
     sncalo.draw()
     sncalo.save("plots")
@@ -199,11 +214,13 @@ def draw_PAR(apulse_nums: list):
     sncalo.draw_content_label('{:.3f}')
 
     for i in range(len(apulse_nums)):
-        if len(apulse_nums[i]) == 0:
-            sncalo.setcontent(i, -1)
-        else:
-            par = float(len(np.where(np.array(apulse_nums[i]) > 0)[0]) / len(apulse_nums[i]) * 100)
-            sncalo.setcontent(i, par)
+        pmt_type = get_pmt_type(i)
+        if pmt_type == 5:
+            if len(apulse_nums[i]) == 0:
+                continue
+            else:
+                par = float(len(np.where(np.array(apulse_nums[i]) > 0)[0]) / len(apulse_nums[i]) * 100)
+                sncalo.setcontent(i, par)
 
     sncalo.draw()
     sncalo.save("plots")
@@ -250,6 +267,8 @@ def draw_event_map(n_events: list):
     sncalo.draw_content_label('{}')
 
     for i in range(len(n_events)):
+        if n_events[i] == 0:
+            continue
         sncalo.setcontent(i, n_events[i])
 
     sncalo.draw()
@@ -331,14 +350,20 @@ def draw_charges(charges: list):
 
 
 def draw_HV_ATD(hvs: list, apulse_times: list):
+    tot_5_canvas_ = ROOT.TCanvas()
+    tot_8_canvas_ = ROOT.TCanvas()
+    tot_5_hist_ = ROOT.TH1D("5inch_PMTs", "5inch_PMTs",
+                            int((1024 / 0.64) / 10), 0, (1024 / 0.64) * np.sqrt(np.max(hvs)/1000))
+    tot_8_hist_ = ROOT.TH1D("8inch_PMTs", "8inch_PMTs",
+                            int((1024 / 0.64) / 10), 0, (1024 / 0.64) * np.sqrt(np.max(hvs)/1000))
     tot_5_canvas = ROOT.TCanvas()
     tot_8_canvas = ROOT.TCanvas()
-    tot_5_hist = ROOT.TH1D("5inch_PMTs", "5inch_PMTs",
+    tot_5_hist = ROOT.TH1D("5inch_PMTs_HV", "5inch_PMTs_HV",
                            int((1024 / 0.64) / 10), 0, (1024 / 0.64) * np.sqrt(np.max(hvs)/1000))
-    tot_8_hist = ROOT.TH1D("8inch_PMTs", "8inch_PMTs",
+    tot_8_hist = ROOT.TH1D("8inch_PMTs_HV", "8inch_PMTs_HV",
                            int((1024 / 0.64) / 10), 0, (1024 / 0.64) * np.sqrt(np.max(hvs)/1000))
     for i in range(len(apulse_times)):
-        '''max_val = 1024 / 0.64 * np.sqrt(hvs[i]/1000)
+        max_val = (1024 / 0.64) * np.sqrt(hvs[i]/1000)
         canvas = ROOT.TCanvas()
         canvas.cd()
         hist = ROOT.TH1D(f"{om_id_string(i)}", f"{om_id_string(i)}", int((1024 / 0.64) / 20), 0, max_val)
@@ -355,16 +380,18 @@ def draw_HV_ATD(hvs: list, apulse_times: list):
         canvas.SetGrid()
         canvas.SaveAs(f"plots/h_hv_atd_{i}.png")
         del hist
-        del canvas'''
+        del canvas
 
         pmt_type = get_pmt_type(i)
 
         if pmt_type == 5:
             for j in range(len(apulse_times[i])):
-                tot_5_hist.Fill(apulse_times[i][j] / 0.64 * np.sqrt(hvs[i] / 1000))
+                tot_5_hist.Fill((apulse_times[i][j] / 0.64) * np.sqrt(hvs[i] / 1000))
+                tot_5_hist_.Fill(apulse_times[i][j] / 0.64)
         else:
             for j in range(len(apulse_times[i])):
-                tot_8_hist.Fill(apulse_times[i][j] / 0.64 * np.sqrt(hvs[i] / 1000))
+                tot_8_hist.Fill((apulse_times[i][j] / 0.64) * np.sqrt(hvs[i] / 1000))
+                tot_8_hist_.Fill(apulse_times[i][j] / 0.64)
 
     tot_5_canvas.cd()
     tot_5_hist.Scale(1.0 / tot_5_hist.GetEntries())
@@ -390,6 +417,30 @@ def draw_HV_ATD(hvs: list, apulse_times: list):
     del tot_8_hist
     del tot_8_canvas
 
+    tot_5_canvas_.cd()
+    tot_5_hist_.Scale(1.0 / tot_5_hist_.GetEntries())
+    tot_5_hist_.SetFillColor(2)
+    tot_5_hist_.Sumw2()
+    tot_5_hist_.SetXTitle("timestamp /ns")
+    tot_5_hist_.SetYTitle("Normalised Counts")
+    tot_5_hist_.Draw("HIST")
+    tot_5_canvas_.SetGrid()
+    tot_5_canvas_.SaveAs(f"plots/h_atd_5tot.png")
+    del tot_5_hist_
+    del tot_5_canvas_
+
+    tot_8_canvas_.cd()
+    tot_8_hist_.Scale(1.0 / tot_8_hist_.GetEntries())
+    tot_8_hist_.SetFillColor(2)
+    tot_8_hist_.Sumw2()
+    tot_8_hist_.SetXTitle("timestamp /ns")
+    tot_8_hist_.SetYTitle("Normalised Counts")
+    tot_8_hist_.Draw("HIST")
+    tot_8_canvas_.SetGrid()
+    tot_8_canvas_.SaveAs(f"plots/h_atd_8tot.png")
+    del tot_8_hist_
+    del tot_8_canvas_
+
 
 def main():
     args = io_parse_arguments()
@@ -401,11 +452,11 @@ def main():
     if template_file is None:
         template_file = "/Users/willquinn/Desktop/templates.root"
 
-    templates, comparison_template = get_templates(template_file, comparison=1)
-    draw_template_quality(comparison_template, templates)
-    return
+    #t emplates, comparison_template = get_templates(template_file, comparison=1)
+    # draw_template_quality(comparison_template, templates)
 
     om_hvs = load_HV("/Users/willquinn/Desktop/calorimeter_equalized_04Mar2020.txt")
+    # draw_HVs(om_hvs)
 
     root_file = ROOT.TFile(input_file, "READ")
     tree = root_file.T
@@ -447,10 +498,10 @@ def main():
 
     # draw_AAN(apulse_nums)
     # draw_PAR(apulse_nums)
-    # draw_ATD(apulse_times)
+    draw_ATD(apulse_times)
     # draw_AAD(apulse_amplitudes)
     # draw_event_map(n_events)
-    # draw_HV_ATD(om_hvs, apulse_times)
+    draw_HV_ATD(om_hvs, apulse_times)
     # draw_charges(charges)
 
     root_file.Close()
