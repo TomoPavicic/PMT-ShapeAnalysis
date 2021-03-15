@@ -248,9 +248,9 @@ int main(int argc, char **argv)
 
         // These next three branches should be uncommented if you wish to store the waveform and
         // MF outputs - WARNING takes up a lot of storage space. I recommend only for testing and plots
-        tree.Branch("mf_amplitudes",&matchfilter.mf_amps);
-        tree.Branch("mf_shapes",&matchfilter.mf_shapes);
-        tree.Branch("waveform",&waveform);
+        // tree.Branch("mf_amplitudes",&matchfilter.mf_amps);
+        // tree.Branch("mf_shapes",&matchfilter.mf_shapes);
+        // tree.Branch("waveform",&waveform);
 
         // Configuration for raw data reader
         snfee::io::multifile_data_reader::config_type reader_cfg;
