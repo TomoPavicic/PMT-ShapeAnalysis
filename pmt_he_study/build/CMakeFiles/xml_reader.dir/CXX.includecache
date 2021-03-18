@@ -1,0 +1,30 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/tomopavicic/PMT_Helium_WD/PMT-ShapeAnalysis/pmt_he_study/xml_reader.cpp
+iostream
+-
+fstream
+-
+string
+-
+vector
+-
+cmath
+-
+boost/program_options.hpp
+-
+TTree.h
+-
+TDatime.h
+-
+TFile.h
+-
+TH1D.h
+-
+
