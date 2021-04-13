@@ -41,7 +41,8 @@ def read_matrix(path):
   return df
 
 def main(path,output):
-
+  
+  '''
   files = directory_list(path)
   n_pulses = []
   pulses_found = []
@@ -78,7 +79,6 @@ def main(path,output):
   #print(df)
   
   
-  
   print("")
   #print(df.sum(numeric_only=True))
   #df.sum(axis=1) 
@@ -90,15 +90,32 @@ def main(path,output):
   df.loc["correct"] = diagonals
   df.loc["accuracy"] = ((df.loc["correct"] / df.loc["total"])*100).astype(int)
   print(df)
+  '''
   
   
-  graph = "y"
+  #Opening the root file
+  root_file  = ROOT.TFile(path, "READ")
+  root_file.cd()
+  
+  hist = root_file.Get("200803_GAO612_apulse_times_1400V")
+  p_times = []
+  print(hist)
+  for i in range(0, hist.GetNbinsX()):
+    #print(hist[i])
+    #p_times.append(hist.GetBinContent(i))
+    p_times.append(hist[i])
+  
+  p_times = np.array(p_times)
+  p_times = p_times/len(p_times)
+  
+  graph = "hist"
   if graph == "hist":
-    bins = np.arange(0,8000,40)
-    hist = plt.hist(n_pulses,bins=bins,density=True)
+    bins = np.arange(0,7000,1)
+    #hist = plt.hist(p_times,density=True)
+    plt.bar(bins,p_times,align='edge',width=1,alpha=1,color='b')
     plt.ylabel("Frequency")
     plt.xlabel("Afterpulse time /ns")
-    plt.savefig(output + '.png')
+    plt.savefig(output + '.pdf')
   if graph == "yesno":
     fig = px.bar(df, x=df.index, y=columns,barmode='group',
     labels = {"value":"Number of waveforms with given pulses found", "index": "Number inserted", "variable":"Number of   pulses per waveform found"}, width=1000, height=500)

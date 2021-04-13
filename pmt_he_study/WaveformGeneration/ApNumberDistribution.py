@@ -24,29 +24,28 @@ def directory_list(folder_path):
     sys.exit()
 
 
-def poisson(x,mu):
+def poisson(x,mu,A):
   factorials = factorial(x)
-  return np.exp(-mu)*mu**x/factorials
+  return A*np.exp(-mu)*mu**x/factorials
 
-def gaussian(x,mu,sd):
+def gaussian(x,mu,sd,A):
   exponent = -0.5*np.square((x-mu)/sd)
-  const = 1/(sd*np.sqrt(2*np.pi))
-  return const*np.exp(exponent)
+  return A*np.exp(exponent)
 
-def gaus_mod(x,mu,sd):
-  df = read_matrix("Matrix1.txt")
-  exponent = -0.5*np.square((x-mu)/sd)
-  const = 1/(sd*np.sqrt(2*np.pi))
-  dist = const*np.exp(exponent)
-  #dist = A*np.exp(exponent)
+def gaus_mod(x,mu,sd,A):
+  diff = x - mu
+  exponent = np.exp( -0.5*(diff/sd)**2 )
+  #const = 1/(sd*np.sqrt(2*np.pi))
+  #dist = const*np.exp(exponent)
+  dist = A*exponent
   
-  return dist_smear(dist,df)
+  
+  return dist_smear(dist)
 
-def poisson_mod(x,mu):
-  df = read_matrix("Matrix1.txt")
+def poisson_mod(x,mu,A):
   factorials = factorial(x)
-  dist = np.exp(-mu)*mu**x/factorials
-  return dist_smear(dist,df)
+  dist = A*np.exp(-mu)*mu**x/factorials
+  return dist_smear(dist)
   
 def mychi(O,Exp,Err):
   
@@ -62,7 +61,10 @@ def mychi(O,Exp,Err):
       chi = chi + (O[i]-Exp[i])**2/Err[i]**2
       
   return chi/(bins-parameters)
-
+  
+def landau_mod(x,loc,sf):
+  dist = moyal.pdf(x,loc,sf)
+  return dist_smear(dist)
 
 
 def day_plot(path,name):
@@ -227,97 +229,120 @@ def get_bins_values(path):
   
   return bins, normed, mean, freq
 
-def dist_smear(start_values,df):
-  
-  transformed_values = np.zeros(19)
-  count = 0
-  
-  for value in start_values:
-    #print(df.iloc[count].values)
-    dummy = df.iloc[count].values*value
-    transformed_values = transformed_values + dummy
-    count = count + 1
-  
-  print(type(transformed_values))
-  print(transformed_values)
+def dist_smear(start_values):
+  df = pd.read_csv("Matrix1.txt", index_col = 0)
+  df = df/500
+  df.loc["i0","0"] = 1
+  M = df.values
+  transformed_values = M.T @ start_values
   return transformed_values
 
-def read_matrix(path):
-  df = pd.read_csv(path, index_col = 0)
-  return df
+def mean_calc(bins,dist):
+  dot_prod = np.dot(bins,dist)
+  return dot_prod/sum(dist)
+
 
 def main(path, name):
   graph = "transform"
-  
-  df = read_matrix("Matrix1.txt")
-  
-  df = df/500
-  df.loc["i0","0"] = 1
+  fit = "gaus"
   
   bins, real_values, real_mean, freq = get_bins_values(path)
   
-  real_mean = 2.6
-  sd = 2.3
+  #real_mean = 2.6
+  #sd = 2.3
   
-  #popt, pcov = curve_fit(gaussian,bins,real_values)
-  #print(popt)
-  
-  freq = freq.astype(float)
-  freq[13:] = 1
+
+  freq = [0.000001 if x==0 else x for x in freq]
   print(freq)
-  
-  popt,pcov = curve_fit(gaus_mod,bins,real_values, p0=(2.1,2) ,sigma=np.sqrt(freq)/sum(freq),bounds=((1,1),(3,3)))
-  print(popt)
-  
-  #popt,pcov = curve_fit(poisson_mod,bins,real_values)
-  #print(popt)
-  
-  
-  real_mean = popt[0]
-  sd = popt[1]
-  
-  #start_values = poisson(bins,real_mean)
-  start_values = gaussian(bins,real_mean,sd)
-  #start_values = moyal.pdf(bins,0.4)
-  
+  #freq = freq.astype(float)
+  #freq[13:] = 0.0000001
+
+  err = np.sqrt(freq)/sum(freq)
   
   x = np.arange(0,20,0.1)
   
-  #continuous_plot = poisson(x,real_mean)
-  continuous_plot = gaussian(x,real_mean,sd)
-  #continuous_plot = moyal.pdf(x,0.4)
+  #err = 0.1 * real_values
+  #err[13:] = 0.0001
+  
+  if fit == "gaus":
+    #popt, pcov = curve_fit(gaussian,bins,real_values)
 
-  transformed_values = dist_smear(start_values,df)
+        
+    popt,pcov = curve_fit(gaus_mod,bins,real_values ,sigma=err)
+    real_mean = popt[0]
+    sd = popt[1]
+    A = popt[2]
+    
+    start_values = gaussian(bins,real_mean,sd,A)
+    continuous_plot = gaussian(x,real_mean,sd,A)
+    
+    title = "Starting Gaussian mean: {}, sd: {}, and Constant: {}".format(round(real_mean,2),round(sd,2),round(A,2))
+    
+  if fit == "poisson":
+    #popt, pcov = curve_fit(poisson,bins,real_values)
+    popt,pcov = curve_fit(poisson_mod,bins,real_values, sigma = err)
+
+  
+    real_mean = popt[0]
+    A = popt[1]
+    start_values = poisson(bins,real_mean,A)
+    continuous_plot = poisson(x,real_mean,A)
+    
+    title = "Starting Poisson mean: {}, A: {}".format(round(real_mean,2),round(A,2))
+    
+  if fit == "landau":
+    popt,pcov = curve_fit(landau_mod,bins,real_values,sigma=err)
+    
+    loc = popt[0]
+    sf = popt[1]
+    
+    start_values = moyal.pdf(bins,loc,sf)
+    continuous_plot = moyal.pdf(x,loc,sf)
+    title = "Approximated Landau Distribution"
+
+  
+  
+  transformed_values = dist_smear(start_values)
   
   trans_residuals = real_values - transformed_values
   start_residuals = real_values - start_values
   
-  chivalue = np.round(mychi(real_values,transformed_values,np.sqrt(freq)/sum(freq)),5)
-
+  chivalue = np.round(mychi(real_values,transformed_values,err),5)
+  
+  data_mean = round(mean_calc(bins,real_values),3)
+  dist_mean = round(mean_calc(bins,start_values),3)
+  smear_mean = round(mean_calc(bins,transformed_values),3)
+  
+  print(data_mean)
+  print(dist_mean)
+  print(smear_mean)
+  
   fig, (ax0, ax1) = plt.subplots(2, 1, gridspec_kw={'height_ratios': [3, 1]})
   
-  ax0.set_title("Approximated Landau Distribution")
-  #ax0.set_title("Starting Gaussian with mean: {} and sd: {}".format(real_mean,sd))
-  #ax0.set_title("Starting Poisson with mean: {}".format(real_mean))
-  
-  ax0.errorbar(bins+0.5,real_values, xerr=0.5, yerr=np.sqrt(freq)/sum(freq), fmt='.', color="b")
+  ax0.set_title(title)
+  ax0.errorbar(bins+0.5,real_values, xerr=0.5, yerr=err, fmt='.', color="b")
   ax0.scatter(bins+0.5,real_values, alpha =1, color='b',label="Real data", s=10)
   ax0.annotate(r"$\chi^2_{R}$ :"  + str(chivalue), xy=(1,0.6), xycoords="axes fraction",
   horizontalalignment ="right")
+  ax0.annotate("Data mean: {}".format(data_mean), xy=(1,0.5), xycoords="axes fraction", horizontalalignment ="right")
+  ax0.annotate("Distribution mean: {}".format(dist_mean), xy=(1,0.4), xycoords="axes fraction", horizontalalignment ="right")
+  ax0.annotate("Smeared mean: {}".format(smear_mean), xy=(1,0.3), xycoords="axes fraction", horizontalalignment ="right")
+  
+  
   ax0.bar(bins,transformed_values,align='edge',width=1,alpha=0.5,color='r', label="Transformed Distribution")
   ax0.plot(x+0.5,continuous_plot, alpha=1, color='g',label="Starting Distribution")
-  #ax0.set_yscale('log')
+  ax0.set_yscale('log')
   ax0.set_ylabel("Normalised frequency")
   #ax0.set_xlabel("Number of afterpulses")
   ax0.legend()
   
   ax1.scatter(bins+0.5,start_residuals, label="Starting Distribution", color="g", s=5)
-  ax1.errorbar(bins+0.5,trans_residuals, xerr=0.5, yerr=np.sqrt(freq)/sum(freq), fmt='.', color="r",alpha=0.5)
+  ax1.errorbar(bins+0.5,trans_residuals, xerr=0.5, yerr=err, fmt='.', color="r",alpha=0.5)
   ax1.scatter(bins+0.5,trans_residuals, label="Transformed", color ="r", alpha =0.5,s=5)
   ax1.set_ylabel("Residuals")
   ax1.set_xlabel("Number of afterpulses")
   ax1.hlines(0,xmin=0,xmax=18, color="y", linestyles="dashed")
-  ax1.legend()
+  ax1.legend(loc="lower right")
   #ax1.yscale("log")
     
   fig.tight_layout()

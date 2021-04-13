@@ -14,7 +14,7 @@ do
   esac
 done
 
-root_dir="/home/tomopavicic/PMT_Helium_WD/PMT-ShapeAnalysis/pmt_he_study/WaveformGeneration/$tag"
+root_dir="/home/tomopavicic/PMT-ShapeAnalysis/pmt_he_study/WaveformGeneration/$tag"
 #script_log_dir=batch_log_$tag
 mkdir $root_dir/batch_files
 mkdir $root_dir/batch_files/scripts
@@ -27,7 +27,7 @@ data_file_list=`cat $root_dir/batch_files/filenames.ascii`
 config_file="$root_dir/ATC40Copy.conf"
 
 # ROOT macro to use:
-source_executable="/home/tomopavicic/PMT_Helium_WD/PMT-ShapeAnalysis/pmt_he_study/build/xml_reader"
+source_executable="/home/tomopavicic/PMT-ShapeAnalysis/pmt_he_study/build/xml_reader"
 #
 underscore="_"
 dates="110011"
@@ -56,7 +56,7 @@ do
     # Prepare batch script in a temporary directory (not sure if this is robust)
     touch $root_dir/batch_files/scripts/batch_file_$ifile.sh
     chmod a+rwx $root_dir/batch_files/scripts/batch_file_$ifile.sh
-    echo "source /home/tomopavicic/PMT_Helium_WD/PMT-ShapeAnalysis/pmt_he_study/setup.sh" >> $root_dir/batch_files/scripts/batch_file_$ifile.sh
+    echo "source /home/tomopavicic/PMT-ShapeAnalysis/pmt_he_study/setup.sh" >> $root_dir/batch_files/scripts/batch_file_$ifile.sh
     echo "echo 'Running batch_file_$ifile.sh ...' >> $root_dir/batch_files/logs/batch_file_$ifile.log" >> $root_dir/batch_files/scripts/batch_file_$ifile.sh
     echo $interactive_command >> $root_dir/batch_files/scripts/batch_file_$ifile.sh
     batch_command="qsub -q $queue $root_dir/batch_files/scripts/batch_file_$ifile.sh"

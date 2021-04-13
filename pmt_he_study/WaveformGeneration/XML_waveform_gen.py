@@ -28,7 +28,8 @@ def extract_ap_times():
   ap_times = []
   for event in tree:
     for value in event.apulse_times:
-      ap_times.append(value)
+      if value > 1400 and value < 2000:
+        ap_times.append(value)
   
   
   if image == "y":
